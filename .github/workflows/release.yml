@@ -15,10 +15,10 @@ jobs:
         os: [macos-latest, windows-latest]
         
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
@@ -36,7 +36,7 @@ jobs:
       
     - name: Upload macOS artifacts
       if: matrix.os == 'macos-latest'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-builds
         path: |
@@ -45,7 +45,7 @@ jobs:
           
     - name: Upload Windows artifacts
       if: matrix.os == 'windows-latest'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: windows-builds
         path: |
@@ -57,57 +57,25 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
-      
+      uses: actions/download-artifact@v4
+      with:
+        merge-multiple: true
+        
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Web Page Scorer ${{ github.ref }}
+        tag_name: ${{ github.ref_name }}
+        name: Web Page Scorer ${{ github.ref_name }}
         body_path: RELEASE_NOTES.md
         draft: false
         prerelease: false
-        
-    - name: Upload Release Assets
-      uses: actions/github-script@v6
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const fs = require('fs');
-          const path = require('path');
-          
-          const uploadAsset = async (filePath, name) => {
-            const contentType = name.endsWith('.dmg') ? 'application/x-apple-diskimage' :
-                              name.endsWith('.zip') ? 'application/zip' :
-                              'application/octet-stream';
-                              
-            return github.rest.repos.uploadReleaseAsset({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: ${{ steps.create_release.outputs.id }},
-              name: name,
-              data: fs.readFileSync(filePath),
-              headers: {
-                'content-type': contentType,
-                'content-length': fs.statSync(filePath).size,
-              },
-            });
-          };
-          
-          // Upload macOS files
-          const macFiles = fs.readdirSync('macos-builds').filter(f => f.endsWith('.dmg') || f.endsWith('.zip'));
-          for (const file of macFiles) {
-            await uploadAsset(path.join('macos-builds', file), file);
-          }
-          
-          // Upload Windows files
-          const winFiles = fs.readdirSync('windows-builds').filter(f => f.endsWith('.exe'));
-          for (const file of winFiles) {
-            await uploadAsset(path.join('windows-builds', file), file);
-          } 
+        files: |
+          *.dmg
+          *.zip
+          *.exe 
