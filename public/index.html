@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Page Scorer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #3367d6;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    .content {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .web-view {
+      flex: 1;
+      min-width: 600px;
+      min-height: 500px;
+    }
+    .web-frame {
+      width: 100%;
+      height: 500px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .sidebar {
+      width: 350px;
+      min-width: 300px;
+    }
+    .info-panel, .score-panel {
+      background-color: #f9f9f9;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    .score-options {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+    }
+    .score-button {
+      flex: 1;
+      text-align: center;
+      padding: 12px 8px;
+    }
+    .pass {
+      background-color: #34a853;
+    }
+    .pass:hover {
+      background-color: #2e8b47;
+    }
+    .fail {
+      background-color: #ea4335;
+    }
+    .fail:hover {
+      background-color: #d33426;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f2f2f2;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 14px;
+    }
+    .screenshot-preview {
+      max-width: 100%;
+      margin-top: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 500px;
+      font-size: 18px;
+      color: #666;
+    }
+    .hidden {
+      display: none;
+    }
+    .url-display {
+      word-break: break-all;
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    .url-display:hover {
+      text-decoration: underline;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background-color: #e0e0e0;
+      border-radius: 3px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background-color: #4285f4;
+      transition: width 0.3s ease;
+    }
+    .error-message {
+      background-color: #ffebee;
+      color: #c62828;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    
+    @media (max-width: 768px) {
+      .content {
+        flex-direction: column;
+      }
+      .web-view {
+        min-width: auto;
+      }
+      .sidebar {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Web Page Scorer</h1>
+    
+    <div class="controls">
+      <div class="nav-buttons">
+        <button id="prev-btn" disabled>← Previous</button>
+        <button id="next-btn">Next →</button>
+      </div>
+      <div class="action-buttons">
+        <button id="reload-btn">🔄 Reload Data</button>
+        <button id="save-btn">💾 Save Results</button>
+      </div>
+    </div>
+    
+    <div class="progress-bar">
+      <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+    </div>
+    
+    <div class="content">
+      <div class="web-view">
+        <iframe id="web-frame" class="web-frame" frameborder="0"></iframe>
+        <div id="loading" class="loading">
+          <div>Loading Excel data...</div>
+        </div>
+      </div>
+      
+      <div class="sidebar">
+        <div class="info-panel">
+          <h3>📋 Page Information</h3>
+          <p><strong>Description:</strong><br><span id="description-text">-</span></p>
+          <p><strong>URL:</strong><br><a id="url-link" href="#" target="_blank" class="url-display">-</a></p>
+          <p><strong>Progress:</strong> <span id="page-index">0</span> / <span id="total-pages">0</span></p>
+          <button id="open-new-window-btn" style="width: 100%; margin-top: 10px; padding: 8px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">🔗 Open in New Window</button>
+        </div>
+        
+        <div class="score-panel">
+          <h3>⭐ Score this Page</h3>
+          <div class="score-options">
+            <button id="pass-btn" class="score-button pass">✅ Pass (1)</button>
+            <button id="fail-btn" class="score-button fail">❌ Fail (0)</button>
+          </div>
+          <p><strong>Current score:</strong> <span id="current-score">Not scored</span></p>
+          <button id="screenshot-btn">📸 Take Screenshot</button>
+          <img id="screenshot-preview" class="screenshot-preview hidden" alt="Screenshot" />
+        </div>
+        
+        <div id="status" class="status">Ready</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let excelData = [];
+    let columns = {};
+    let currentIndex = 1; // Start from the first data row (skip headers)
+    
+    // DOM Elements
+    const webFrame = document.getElementById('web-frame');
+    const loadingIndicator = document.getElementById('loading');
+    const descriptionText = document.getElementById('description-text');
+    const urlLink = document.getElementById('url-link');
+    const pageIndexEl = document.getElementById('page-index');
+    const totalPagesEl = document.getElementById('total-pages');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const passBtn = document.getElementById('pass-btn');
+    const failBtn = document.getElementById('fail-btn');
+    const currentScoreEl = document.getElementById('current-score');
+    const screenshotBtn = document.getElementById('screenshot-btn');
+    const screenshotPreview = document.getElementById('screenshot-preview');
+    const saveBtn = document.getElementById('save-btn');
+    const reloadBtn = document.getElementById('reload-btn');
+    const statusEl = document.getElementById('status');
+    const progressFill = document.getElementById('progress-fill');
+    const openNewWindowBtn = document.getElementById('open-new-window-btn');
+    
+    // Initialize
+    async function init() {
+      updateStatus('Loading Excel data...');
+      await loadExcelData();
+    }
+    
+    // Load Excel data from server
+    async function loadExcelData() {
+      try {
+        const response = await fetch('/api/excel');
+        const result = await response.json();
+        
+        if (result.error) {
+          showError(`Error: ${result.error}`);
+          return;
+        }
+        
+        excelData = result.data;
+        columns = result.columns;
+        
+        if (excelData.length <= 1) {
+          showError('No data found in Excel file');
+          return;
+        }
+        
+        totalPagesEl.textContent = excelData.length - 1; // Subtract header row
+        updateProgress();
+        
+        loadPage(currentIndex);
+        updateStatus('Excel data loaded successfully');
+        
+      } catch (error) {
+        showError(`Failed to load Excel data: ${error.message}`);
+      }
+    }
+    
+    // Load page data
+    function loadPage(index) {
+      if (index < 1 || index >= excelData.length) return;
+      
+      currentIndex = index;
+      const rowData = excelData[index];
+      
+      // Update navigation buttons
+      prevBtn.disabled = currentIndex <= 1;
+      nextBtn.disabled = currentIndex >= excelData.length - 1;
+      
+      // Update progress
+      updateProgress();
+      
+      // Update page info
+      pageIndexEl.textContent = currentIndex;
+      descriptionText.textContent = rowData[columns.description] || 'No description';
+      
+      const url = rowData[columns.link] || '';
+      urlLink.textContent = url || 'No URL';
+      urlLink.href = url || '#';
+      
+      // Update score display
+      const score = rowData[columns.result];
+      if (score === 0 || score === '0') {
+        currentScoreEl.textContent = '❌ Failed (0)';
+        currentScoreEl.style.color = '#d32f2f';
+      } else if (score === 1 || score === '1') {
+        currentScoreEl.textContent = '✅ Passed (1)';
+        currentScoreEl.style.color = '#388e3c';
+      } else {
+        currentScoreEl.textContent = 'Not scored';
+        currentScoreEl.style.color = '#666';
+      }
+      
+      // Check for screenshot
+      const screenshotData = rowData[columns.screenshot];
+      if (screenshotData) {
+        const imgSrc = screenshotData.startsWith('data:') 
+          ? screenshotData 
+          : `data:image/png;base64,${screenshotData}`;
+        screenshotPreview.src = imgSrc;
+        screenshotPreview.classList.remove('hidden');
+        screenshotPreview.onclick = () => window.open(imgSrc, '_blank');
+      } else {
+        screenshotPreview.classList.add('hidden');
+      }
+      
+      // Load webpage
+      if (url) {
+        loadingIndicator.style.display = 'flex';
+        loadingIndicator.innerHTML = '<div>Loading webpage...</div>';
+        webFrame.style.display = 'none';
+        
+        let loadTimeout;
+        let hasLoaded = false;
+        
+        // Set up load timeout (10 seconds)
+        loadTimeout = setTimeout(() => {
+          if (!hasLoaded) {
+            hasLoaded = true;
+            clearTimeout(loadTimeout);
+            showIframeError(url, 'Page load timeout. This page may be taking too long to load or blocking iframe access.');
+          }
+        }, 10000);
+        
+        webFrame.onload = () => {
+          if (!hasLoaded) {
+            hasLoaded = true;
+            clearTimeout(loadTimeout);
+            
+            // Check if the iframe actually loaded content
+            try {
+              // Try to access iframe content to detect X-Frame-Options blocking
+              const iframeDoc = webFrame.contentDocument || webFrame.contentWindow.document;
+              if (iframeDoc.URL === 'about:blank' || iframeDoc.URL === '') {
+                showIframeError(url, 'This website blocks iframe loading for security reasons.');
+                return;
+              }
+            } catch (e) {
+              // If we can't access iframe content, it likely loaded successfully but with restrictions
+              // This is normal for cross-origin content
+            }
+            
+            loadingIndicator.style.display = 'none';
+            webFrame.style.display = 'block';
+          }
+        };
+        
+        webFrame.onerror = () => {
+          if (!hasLoaded) {
+            hasLoaded = true;
+            clearTimeout(loadTimeout);
+            showIframeError(url, 'Failed to load webpage.');
+          }
+        };
+        
+        // Additional check for blocked iframes
+        setTimeout(() => {
+          if (!hasLoaded) {
+            try {
+              if (webFrame.contentDocument === null) {
+                hasLoaded = true;
+                clearTimeout(loadTimeout);
+                showIframeError(url, 'This website blocks iframe loading (X-Frame-Options or CSP policy).');
+              }
+            } catch (e) {
+              // This is expected for cross-origin content that loads successfully
+            }
+          }
+        }, 3000);
+        
+        webFrame.src = url;
+      } else {
+        webFrame.src = 'about:blank';
+        loadingIndicator.innerHTML = '<div>No URL available for this entry</div>';
+        loadingIndicator.style.display = 'flex';
+        webFrame.style.display = 'none';
+      }
+    }
+    
+    // Show iframe error with option to open in new window
+    function showIframeError(url, message) {
+      loadingIndicator.innerHTML = `
+        <div style="text-align: center; color: #d32f2f; padding: 20px;">
+          <div style="margin-bottom: 15px;">⚠️ ${message}</div>
+          <button onclick="window.open('${url}', '_blank')" 
+                  style="background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+            🔗 Open in New Window
+          </button>
+          <div style="margin-top: 10px; font-size: 12px; color: #666;">
+            You can evaluate this page in the new window and return here to score it.
+          </div>
+        </div>
+      `;
+      loadingIndicator.style.display = 'flex';
+      webFrame.style.display = 'none';
+    }
+    
+    // Update progress bar
+    function updateProgress() {
+      if (excelData.length <= 1) return;
+      
+      const progress = ((currentIndex) / (excelData.length - 1)) * 100;
+      progressFill.style.width = `${progress}%`;
+    }
+    
+    // Event listeners
+    prevBtn.addEventListener('click', () => {
+      loadPage(currentIndex - 1);
+    });
+    
+    nextBtn.addEventListener('click', () => {
+      loadPage(currentIndex + 1);
+    });
+    
+    passBtn.addEventListener('click', () => {
+      excelData[currentIndex][columns.result] = 1;
+      currentScoreEl.textContent = '✅ Passed (1)';
+      currentScoreEl.style.color = '#388e3c';
+      updateStatus('Marked as Passed');
+    });
+    
+    failBtn.addEventListener('click', () => {
+      excelData[currentIndex][columns.result] = 0;
+      currentScoreEl.textContent = '❌ Failed (0)';
+      currentScoreEl.style.color = '#d32f2f';
+      updateStatus('Marked as Failed - Taking screenshot...');
+      
+      // Take a screenshot automatically for failed pages
+      takeScreenshot();
+    });
+    
+    screenshotBtn.addEventListener('click', () => {
+      takeScreenshot();
+    });
+    
+    saveBtn.addEventListener('click', async () => {
+      await saveResults();
+    });
+    
+    reloadBtn.addEventListener('click', async () => {
+      await loadExcelData();
+    });
+    
+    openNewWindowBtn.addEventListener('click', () => {
+      const url = excelData[currentIndex] && excelData[currentIndex][columns.link];
+      if (url) {
+        window.open(url, '_blank');
+        updateStatus('Page opened in new window');
+      } else {
+        updateStatus('No URL available for this entry');
+      }
+    });
+    
+    // Take screenshot
+    async function takeScreenshot() {
+      const url = excelData[currentIndex][columns.link];
+      if (!url) {
+        updateStatus('No URL to screenshot');
+        return;
+      }
+      
+      updateStatus('Taking screenshot...');
+      screenshotBtn.disabled = true;
+      
+      try {
+        const response = await fetch('/api/screenshot', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url })
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+          showError(`Screenshot error: ${result.error}`);
+          return;
+        }
+        
+        // Save screenshot data to the Excel data
+        const screenshotData = `data:image/png;base64,${result.screenshot}`;
+        excelData[currentIndex][columns.screenshot] = screenshotData;
+        
+        // Display the screenshot
+        screenshotPreview.src = screenshotData;
+        screenshotPreview.classList.remove('hidden');
+        screenshotPreview.onclick = () => window.open(screenshotData, '_blank');
+        
+        updateStatus('Screenshot taken successfully');
+        
+      } catch (error) {
+        showError(`Screenshot failed: ${error.message}`);
+      } finally {
+        screenshotBtn.disabled = false;
+      }
+    }
+    
+    // Save results
+    async function saveResults() {
+      updateStatus('Saving results...');
+      saveBtn.disabled = true;
+      
+      try {
+        const response = await fetch('/api/save', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ data: excelData })
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+          showError(`Save error: ${result.error}`);
+          return;
+        }
+        
+        updateStatus('Results saved successfully ✅');
+        
+      } catch (error) {
+        showError(`Save failed: ${error.message}`);
+      } finally {
+        saveBtn.disabled = false;
+      }
+    }
+    
+    // Update status message
+    function updateStatus(message) {
+      statusEl.textContent = message;
+      statusEl.style.backgroundColor = '#f2f2f2';
+      statusEl.style.color = '#333';
+    }
+    
+    // Show error message
+    function showError(message) {
+      statusEl.textContent = message;
+      statusEl.style.backgroundColor = '#ffebee';
+      statusEl.style.color = '#c62828';
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) return; // Ignore if Ctrl/Cmd is pressed
+      
+      switch(e.key) {
+        case 'ArrowLeft':
+          if (!prevBtn.disabled) loadPage(currentIndex - 1);
+          e.preventDefault();
+          break;
+        case 'ArrowRight':
+          if (!nextBtn.disabled) loadPage(currentIndex + 1);
+          e.preventDefault();
+          break;
+        case '1':
+          passBtn.click();
+          e.preventDefault();
+          break;
+        case '0':
+          failBtn.click();
+          e.preventDefault();
+          break;
+        case 's':
+          if (e.ctrlKey || e.metaKey) {
+            saveResults();
+            e.preventDefault();
+          }
+          break;
+      }
+    });
+    
+    // Initialize the app
+    init();
+  </script>
+</body>
+</html> 
