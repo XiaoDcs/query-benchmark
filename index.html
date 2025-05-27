@@ -20,26 +20,28 @@
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    h1 {
-      text-align: center;
-      color: #333;
-      margin: 0 0 15px 0;
-      font-size: 24px;
-    }
     .controls {
       display: flex;
       justify-content: space-between;
       margin-bottom: 15px;
       flex-wrap: wrap;
       gap: 10px;
+      align-items: center;
     }
     .nav-buttons {
       display: flex;
       gap: 8px;
+      align-items: center;
+    }
+    .score-buttons {
+      display: flex;
+      gap: 8px;
+      align-items: center;
     }
     .action-buttons {
       display: flex;
       gap: 8px;
+      align-items: center;
     }
     button {
       padding: 8px 12px;
@@ -58,62 +60,10 @@
       background-color: #cccccc;
       cursor: not-allowed;
     }
-    .content {
-      display: flex;
-      gap: 15px;
-      height: calc(100vh - 120px); /* 减少顶部预留空间，从160px改为120px */
-      min-height: 650px; /* 增加最小高度，从600px改为650px */
-    }
-    .web-view {
-      flex: 1;
-      min-width: 500px;
-      display: flex;
-      flex-direction: column;
-    }
-    .web-frame {
-      width: 100%;
-      flex: 1;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      height: 100%; /* 强制占据全部高度 */
-      min-height: 400px; /* 设置最小高度确保基本可用 */
-      display: flex; /* 让内部内容也使用flex布局 */
-      align-items: center;
-      justify-content: center;
-    }
-    .sidebar {
-      width: 320px;
-      min-width: 300px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      max-height: 100%;
-      overflow-y: auto;
-    }
-    .info-panel, .score-panel {
-      background-color: #f9f9f9;
-      padding: 12px;
-      border-radius: 4px;
-      flex-shrink: 0;
-    }
-    .info-panel h3, .score-panel h3 {
-      margin: 0 0 10px 0;
-      font-size: 16px;
-    }
-    .info-panel p {
-      margin: 8px 0;
-      font-size: 13px;
-    }
-    .score-options {
-      display: flex;
-      gap: 8px;
-      margin: 10px 0;
-    }
     .score-button {
-      flex: 1;
-      text-align: center;
-      padding: 10px 6px;
-      font-size: 13px;
+      padding: 10px 16px;
+      font-weight: bold;
+      font-size: 14px;
     }
     .pass {
       background-color: #34a853;
@@ -126,6 +76,59 @@
     }
     .fail:hover {
       background-color: #d33426;
+    }
+    .screenshot-top {
+      background-color: #ff9800;
+      padding: 8px 12px;
+    }
+    .screenshot-top:hover {
+      background-color: #f57c00;
+    }
+    .content {
+      display: flex;
+      gap: 15px;
+      height: calc(100vh - 100px); /* 减少顶部空间，从120px改为100px */
+      min-height: 650px;
+    }
+    .web-view {
+      flex: 1;
+      min-width: 500px;
+      display: flex;
+      flex-direction: column;
+    }
+    .web-frame {
+      width: 100%;
+      flex: 1;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      height: 100%;
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sidebar {
+      width: 320px;
+      min-width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 100%;
+      overflow-y: auto;
+    }
+    .info-panel, .settings-panel, .issue-panel {
+      background-color: #f9f9f9;
+      padding: 12px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .info-panel h3, .settings-panel h3, .issue-panel h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+    }
+    .info-panel p {
+      margin: 8px 0;
+      font-size: 13px;
     }
     .status {
       margin-top: 10px;
@@ -212,33 +215,6 @@
       font-size: 12px;
     }
     
-    /* 移动端响应式 */
-    @media (max-width: 900px) {
-      .content {
-        flex-direction: column;
-        height: auto;
-        min-height: auto;
-      }
-      .sidebar {
-        width: 100%;
-        min-width: auto;
-        max-height: none;
-      }
-      .web-view {
-        min-width: auto;
-        height: 50vh;
-        min-height: 400px;
-      }
-      .controls {
-        flex-direction: column;
-        gap: 8px;
-      }
-      .nav-buttons, .action-buttons {
-        justify-content: center;
-        flex-wrap: wrap;
-      }
-    }
-    
     /* 自动跳转开关样式 */
     .settings-panel {
       background-color: #f0f8ff;
@@ -301,18 +277,217 @@
       margin-top: 8px;
       line-height: 1.4;
     }
+
+    /* Issue标签相关样式 */
+    .issue-panel {
+      background-color: #fff3e0;
+      border: 1px solid #ffcc80;
+    }
+    .issue-panel h3 {
+      color: #f57c00;
+    }
+    .preset-tags {
+      margin-bottom: 10px;
+    }
+    .preset-tag {
+      display: inline-block;
+      background-color: #e3f2fd;
+      color: #1976d2;
+      padding: 4px 8px;
+      margin: 2px 4px 2px 0;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: pointer;
+      border: 1px solid #bbdefb;
+      transition: all 0.2s;
+    }
+    .preset-tag:hover {
+      background-color: #bbdefb;
+    }
+    .preset-tag.active {
+      background-color: #2196f3;
+      color: white;
+    }
+    .preset-tag.custom-tag {
+      background-color: #f3e5f5;
+      color: #7b1fa2;
+      border-color: #ce93d8;
+    }
+    .preset-tag.custom-tag:hover {
+      background-color: #ce93d8;
+    }
+    .add-tag-btn {
+      display: inline-block;
+      background-color: #e8f5e8;
+      color: #2e7d32;
+      padding: 4px 8px;
+      margin: 2px 4px 2px 0;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: pointer;
+      border: 1px dashed #4caf50;
+      transition: all 0.2s;
+    }
+    .add-tag-btn:hover {
+      background-color: #c8e6c9;
+    }
+    .add-tag-input {
+      margin: 8px 0;
+      padding: 8px;
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+    }
+    .add-tag-input input {
+      width: 100%;
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .add-tag-input button {
+      padding: 4px 12px;
+      margin-right: 4px;
+      font-size: 11px;
+    }
+    .edit-tag-input {
+      margin: 8px 0;
+      padding: 8px;
+      background-color: #fff3e0;
+      border: 1px solid #ffcc80;
+      border-radius: 4px;
+    }
+    .edit-tag-input input {
+      width: 100%;
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .edit-tag-input button {
+      padding: 4px 12px;
+      margin-right: 4px;
+      font-size: 11px;
+    }
+    .tag-shortcuts {
+      font-size: 10px;
+      color: #666;
+      margin-top: 5px;
+      line-height: 1.3;
+    }
+    
+    /* 移动端响应式 */
+    @media (max-width: 900px) {
+      .content {
+        flex-direction: column;
+        height: auto;
+        min-height: auto;
+      }
+      .sidebar {
+        width: 100%;
+        min-width: auto;
+        max-height: none;
+      }
+      .web-view {
+        min-width: auto;
+        height: 50vh;
+        min-height: 400px;
+      }
+      .controls {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .nav-buttons, .score-buttons, .action-buttons {
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+    }
+
+    /* 自定义快捷键配置样式 */
+    .shortcuts-config {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+    .shortcuts-config h4 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #495057;
+    }
+    .shortcut-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #e9ecef;
+      font-size: 11px;
+    }
+    .shortcut-item:last-child {
+      border-bottom: none;
+    }
+    .shortcut-label {
+      color: #495057;
+      flex: 1;
+    }
+    .shortcut-key {
+      background-color: #e9ecef;
+      border: 1px solid #ced4da;
+      border-radius: 3px;
+      padding: 2px 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      min-width: 60px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .shortcut-key:hover {
+      background-color: #dee2e6;
+    }
+    .shortcut-key.recording {
+      background-color: #fff3cd;
+      border-color: #ffeaa7;
+      color: #856404;
+    }
+    .shortcut-key.conflict {
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+    }
+    .shortcuts-actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 5px;
+    }
+    .shortcuts-actions button {
+      font-size: 10px;
+      padding: 3px 8px;
+    }
+    .shortcut-help {
+      font-size: 9px;
+      color: #6c757d;
+      margin-top: 5px;
+      line-height: 1.3;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🌐 Web Page Scorer</h1>
-    
     <div class="controls">
       <div class="nav-buttons">
         <button id="file-btn">📁 Select Excel File</button>
         <button id="prev-btn" disabled>← Previous</button>
         <button id="next-btn" disabled>Next →</button>
         <button id="reload-btn" disabled>🔄 Reload</button>
+      </div>
+      <div class="score-buttons">
+        <button id="pass-btn" class="score-button pass" disabled>✅ Pass (↑)</button>
+        <button id="fail-btn" class="score-button fail" disabled>❌ Fail (↓)</button>
+        <button id="screenshot-btn" class="screenshot-top" disabled>📸 Screenshot</button>
       </div>
       <div class="action-buttons">
         <button id="save-btn" disabled>💾 Save</button>
@@ -348,6 +523,44 @@
             <strong>Thumbnail:</strong>
             <img id="thumbnail-preview" class="hidden" alt="Thumbnail" />
             <div id="thumbnail-placeholder">No thumbnail available</div>
+          </div>
+        </div>
+        
+        <div class="issue-panel">
+          <h3>📝 Issue Notes</h3>
+          
+          <!-- 预设标签区域 -->
+          <div class="preset-tags" id="preset-tags-container">
+            <!-- 标签将通过JavaScript动态生成 -->
+            <span class="add-tag-btn" id="add-tag-btn" title="Add custom tag">+ Add Tag</span>
+          </div>
+          
+          <div class="tag-shortcuts">
+            <strong>Quick tags:</strong> Ctrl+1~9 for tags, Ctrl+0 to clear<br>
+            <strong>Edit tags:</strong> Double-click to edit, right-click custom tags to delete
+          </div>
+          
+          <!-- 添加自定义标签的输入框 -->
+          <div class="add-tag-input hidden" id="add-tag-input">
+            <input type="text" id="new-tag-input" placeholder="Enter new tag name..." maxlength="20">
+            <button id="save-tag-btn">Save</button>
+            <button id="cancel-tag-btn">Cancel</button>
+          </div>
+          
+          <!-- 编辑标签的输入框 -->
+          <div class="edit-tag-input hidden" id="edit-tag-input">
+            <input type="text" id="edit-tag-text" placeholder="Edit tag name..." maxlength="20">
+            <button id="save-edit-btn">Save</button>
+            <button id="cancel-edit-btn">Cancel</button>
+          </div>
+          
+          <textarea id="issue-input" rows="3" style="width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 8px; resize: vertical; margin-top: 8px;" placeholder="Enter any issues or notes..."></textarea>
+          
+          <div style="margin-top: 10px;">
+            <img id="screenshot-preview" class="screenshot-preview hidden" alt="Screenshot" />
+            <div id="no-screenshot" style="text-align: center; padding: 20px; background-color: #f5f5f5; border: 1px dashed #ccc; border-radius: 4px; color: #666; font-size: 12px;">
+              📷 No screenshot taken
+            </div>
           </div>
         </div>
         
@@ -393,25 +606,22 @@
             ↓ Fail (saves as 0)<br>
             Ctrl+S Save manually
           </div>
-        </div>
-        
-        <div class="score-panel">
-          <h3>Score this page</h3>
-          <div class="score-options">
-            <button id="pass-btn" class="score-button pass">✅ Pass (↑)</button>
-            <button id="fail-btn" class="score-button fail">❌ Fail (↓)</button>
-          </div>
-          <button id="screenshot-btn" style="width: 100%; margin-top: 8px;">📸 Take Screenshot</button>
           
-          <div style="margin-top: 15px;">
-            <label for="issue-input" style="display: block; margin-bottom: 5px; font-weight: bold;">Issue Notes:</label>
-            <textarea id="issue-input" rows="3" style="width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 8px; resize: vertical;" placeholder="Enter any issues or notes..."></textarea>
-          </div>
-          
+          <!-- 自定义快捷键配置 -->
           <div style="margin-top: 10px;">
-            <img id="screenshot-preview" class="screenshot-preview hidden" alt="Screenshot" />
-            <div id="no-screenshot" style="text-align: center; padding: 20px; background-color: #f5f5f5; border: 1px dashed #ccc; border-radius: 4px; color: #666; font-size: 12px;">
-              📷 No screenshot taken
+            <button id="toggle-shortcuts-btn" style="background-color: #6c757d; width: 100%;">⌨️ Custom Shortcuts</button>
+          </div>
+          
+          <div class="shortcuts-config" id="shortcuts-config-panel">
+            <h4>⌨️ Custom Shortcuts</h4>
+            <div id="shortcuts-list">
+              <!-- 快捷键列表将由JavaScript生成 -->
+            </div>
+            <div class="shortcuts-actions">
+              <button id="reset-shortcuts-btn">Reset All</button>
+            </div>
+            <div class="shortcut-help">
+              Click any shortcut to edit. Press ESC to cancel recording.
             </div>
           </div>
         </div>
@@ -451,6 +661,20 @@
     const preloadCountSelect = document.getElementById('preload-count');
     const pageJumpInput = document.getElementById('page-jump');
     const jumpBtn = document.getElementById('jump-btn');
+    const addTagBtn = document.getElementById('add-tag-btn');
+    const addTagInput = document.getElementById('add-tag-input');
+    const newTagInput = document.getElementById('new-tag-input');
+    const saveTagBtn = document.getElementById('save-tag-btn');
+    const cancelTagBtn = document.getElementById('cancel-tag-btn');
+    const editTagInput = document.getElementById('edit-tag-input');
+    const editTagText = document.getElementById('edit-tag-text');
+    const saveEditBtn = document.getElementById('save-edit-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const presetTagsContainer = document.getElementById('preset-tags-container');
+    const shortcutsList = document.getElementById('shortcuts-list');
+    const resetShortcutsBtn = document.getElementById('reset-shortcuts-btn');
+    const toggleShortcutsBtn = document.getElementById('toggle-shortcuts-btn');
+    const shortcutsConfig = document.querySelector('.shortcuts-config');
     
     // App state
     let excelData = [];
@@ -460,94 +684,407 @@
     let preloadQueue = new Set(); // 预加载队列
     let preloadedPages = new Map(); // 预加载缓存
     let maxPreloadPages = 5; // 默认预加载5页
+    let customTags = []; // 自定义标签数组
+    let presetTags = []; // 预设标签数组（现在也可以编辑）
+    let currentEditingTag = null; // 当前正在编辑的标签
+    let customShortcuts = {}; // 自定义快捷键配置
+    let recordingShortcut = null; // 当前正在录制的快捷键
+    let shortcutsVisible = false; // 快捷键配置面板可见性
     
-    // 自动跳转开关事件
-    autoNextToggle.addEventListener('click', () => {
-      autoNextEnabled = !autoNextEnabled;
-      autoNextToggle.classList.toggle('active', autoNextEnabled);
-      updateStatus(autoNextEnabled ? 'Auto-advance enabled' : 'Auto-advance disabled');
-    });
+    // 默认预设标签
+    const defaultPresetTags = [
+      '有争议性',
+      '涉及敏感话题', 
+      '过于主观评价',
+      '负面语言',
+      '过于标题党',
+      '挑战政策/制度',
+      '图片无法加载'
+    ];
     
-    // 预加载页数设置事件
-    preloadCountSelect.addEventListener('change', (e) => {
-      maxPreloadPages = parseInt(e.target.value);
-      updateStatus(`Preload count set to ${maxPreloadPages} pages`);
-      
-      // 重新开始预加载
-      if (excelData && excelData.length > 1) {
-        startPreloading();
-      }
-    });
+    // 默认快捷键配置
+    const defaultShortcuts = {
+      'previous': { keys: ['ArrowLeft'], description: 'Previous Page' },
+      'next': { keys: ['ArrowRight'], description: 'Next Page' },
+      'pass': { keys: ['ArrowUp'], description: 'Mark as Pass' },
+      'fail': { keys: ['ArrowDown'], description: 'Mark as Fail' },
+      'save': { keys: ['Control', 's'], description: 'Save Manually' },
+      'screenshot': { keys: ['Control', 'p'], description: 'Take Screenshot' },
+      'reload': { keys: ['F5'], description: 'Reload Page' },
+      'openExternal': { keys: ['Control', 'o'], description: 'Open in Browser' },
+      'clearTags': { keys: ['Control', '0'], description: 'Clear Issue Tags' },
+      'toggleAutoNext': { keys: ['Control', 'a'], description: 'Toggle Auto-advance' },
+      'focusJump': { keys: ['Control', 'g'], description: 'Focus Page Jump' }
+    };
     
-    // 页码跳转事件
-    jumpBtn.addEventListener('click', () => {
-      const targetPage = parseInt(pageJumpInput.value);
-      const maxPage = excelData ? excelData.length - 1 : 1;
-      
-      if (targetPage >= 1 && targetPage <= maxPage) {
-        loadPage(targetPage);
-        updateStatus(`Jumped to page ${targetPage}`);
+    // 初始化自定义快捷键系统
+    function initCustomShortcuts() {
+      // 从localStorage加载自定义快捷键
+      const savedShortcuts = localStorage.getItem('customShortcuts');
+      if (savedShortcuts) {
+        try {
+          const parsed = JSON.parse(savedShortcuts);
+          customShortcuts = { ...defaultShortcuts, ...parsed };
+        } catch (e) {
+          console.error('Failed to load custom shortcuts:', e);
+          customShortcuts = { ...defaultShortcuts };
+        }
       } else {
-        showError(`Invalid page number. Please enter a number between 1 and ${maxPage}`);
-        pageJumpInput.value = currentIndex;
+        customShortcuts = { ...defaultShortcuts };
       }
-    });
+      
+      renderShortcutsList();
+      updateShortcutsInfo();
+    }
     
-    // 页码输入框回车事件
-    pageJumpInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        jumpBtn.click();
-      }
-    });
-    
-    // 初始化开关状态
-    autoNextToggle.classList.add('active');
-    
-    // File selection
-    fileBtn.addEventListener('click', async () => {
-      try {
-        const result = await ipcRenderer.invoke('select-file');
-        if (result.success) {
-          await loadExcelData();
-        }
-      } catch (error) {
-        showError(`File selection failed: ${error.message}`);
-      }
-    });
-    
-    // Load Excel data
-    async function loadExcelData() {
-      try {
-        updateStatus('Loading Excel file...');
-        const result = await ipcRenderer.invoke('load-excel');
+    // 渲染快捷键列表
+    function renderShortcutsList() {
+      if (!shortcutsList) return;
+      
+      shortcutsList.innerHTML = '';
+      
+      Object.entries(customShortcuts).forEach(([action, config]) => {
+        const item = document.createElement('div');
+        item.className = 'shortcut-item';
         
-        if (result.success) {
-          excelData = result.data;
-          columns = result.columns;
-          currentIndex = 1; // 从1开始，跳过标题行
-          
-          // 更新页码跳转输入框的最大值
-          const maxPage = excelData.length - 1;
-          pageJumpInput.max = maxPage;
-          pageJumpInput.value = 1;
-          
-          // Enable controls
-          prevBtn.disabled = false;
-          nextBtn.disabled = false;
-          saveBtn.disabled = false;
-          reloadBtn.disabled = false;
-          openExternalBtn.disabled = false;
-          
-          updateStatus(`✅ Loaded ${maxPage} pages from Excel file`);
-          loadPage(1); // 加载第一页数据
-          
-          // 开始预加载
-          startPreloading();
-        } else {
-          showError(result.error || 'Failed to load Excel file');
+        const label = document.createElement('div');
+        label.className = 'shortcut-label';
+        label.textContent = config.description;
+        
+        const keyDisplay = document.createElement('div');
+        keyDisplay.className = 'shortcut-key';
+        keyDisplay.textContent = formatShortcutDisplay(config.keys);
+        keyDisplay.dataset.action = action;
+        keyDisplay.title = 'Click to edit';
+        
+        keyDisplay.addEventListener('click', () => startRecordingShortcut(action, keyDisplay));
+        
+        item.appendChild(label);
+        item.appendChild(keyDisplay);
+        shortcutsList.appendChild(item);
+      });
+    }
+    
+    // 格式化快捷键显示
+    function formatShortcutDisplay(keys) {
+      if (!keys || keys.length === 0) return 'None';
+      
+      return keys.map(key => {
+        switch(key) {
+          case 'Control': return 'Ctrl';
+          case 'ArrowLeft': return '←';
+          case 'ArrowRight': return '→';
+          case 'ArrowUp': return '↑';
+          case 'ArrowDown': return '↓';
+          case ' ': return 'Space';
+          default: return key;
         }
-      } catch (error) {
-        showError(`Failed to load Excel: ${error.message}`);
+      }).join('+');
+    }
+    
+    // 开始录制快捷键
+    function startRecordingShortcut(action, keyElement) {
+      if (recordingShortcut) {
+        cancelRecordingShortcut();
+      }
+      
+      recordingShortcut = { action, element: keyElement, keys: [] };
+      keyElement.classList.add('recording');
+      keyElement.textContent = 'Press keys...';
+      updateStatus(`Recording shortcut for: ${customShortcuts[action].description}`);
+    }
+    
+    // 取消录制快捷键
+    function cancelRecordingShortcut() {
+      if (!recordingShortcut) return;
+      
+      recordingShortcut.element.classList.remove('recording', 'conflict');
+      recordingShortcut.element.textContent = formatShortcutDisplay(customShortcuts[recordingShortcut.action].keys);
+      recordingShortcut = null;
+      updateStatus('Shortcut recording cancelled');
+    }
+    
+    // 保存录制的快捷键
+    function saveRecordedShortcut(keys) {
+      if (!recordingShortcut || keys.length === 0) return;
+      
+      const { action, element } = recordingShortcut;
+      
+      // 检查冲突
+      const conflictAction = findShortcutConflict(keys, action);
+      if (conflictAction) {
+        element.classList.add('conflict');
+        element.textContent = `Conflict with: ${customShortcuts[conflictAction].description}`;
+        updateStatus(`Shortcut conflicts with: ${customShortcuts[conflictAction].description}`);
+        setTimeout(() => {
+          element.classList.remove('conflict');
+          element.textContent = formatShortcutDisplay(keys);
+        }, 2000);
+        return;
+      }
+      
+      // 保存新快捷键
+      customShortcuts[action].keys = [...keys];
+      saveCustomShortcuts();
+      
+      element.classList.remove('recording');
+      element.textContent = formatShortcutDisplay(keys);
+      recordingShortcut = null;
+      
+      updateStatus(`Shortcut updated for: ${customShortcuts[action].description}`);
+      updateShortcutsInfo();
+    }
+    
+    // 查找快捷键冲突
+    function findShortcutConflict(keys, excludeAction) {
+      const keyString = keys.sort().join('+');
+      
+      for (const [action, config] of Object.entries(customShortcuts)) {
+        if (action === excludeAction) continue;
+        if (config.keys.sort().join('+') === keyString) {
+          return action;
+        }
+      }
+      
+      return null;
+    }
+    
+    // 保存自定义快捷键到localStorage
+    function saveCustomShortcuts() {
+      localStorage.setItem('customShortcuts', JSON.stringify(customShortcuts));
+    }
+    
+    // 重置所有快捷键
+    function resetAllShortcuts() {
+      if (confirm('Reset all shortcuts to default? This cannot be undone.')) {
+        customShortcuts = { ...defaultShortcuts };
+        saveCustomShortcuts();
+        renderShortcutsList();
+        updateShortcutsInfo();
+        updateStatus('All shortcuts reset to default');
+      }
+    }
+    
+    // 更新快捷键信息显示
+    function updateShortcutsInfo() {
+      const shortcutsInfo = document.querySelector('.shortcuts-info');
+      if (shortcutsInfo) {
+        shortcutsInfo.innerHTML = `
+          <strong>Current Shortcuts:</strong><br>
+          ${formatShortcutDisplay(customShortcuts.pass.keys)} Pass<br>
+          ${formatShortcutDisplay(customShortcuts.fail.keys)} Fail<br>
+          ${formatShortcutDisplay(customShortcuts.save.keys)} Save<br>
+          <em>Click "Custom Shortcuts" below to edit all shortcuts</em>
+        `;
+      }
+    }
+    
+    // 初始化标签系统
+    function initTagSystem() {
+      // 从localStorage加载预设标签
+      const savedPresetTags = localStorage.getItem('presetTags');
+      if (savedPresetTags) {
+        try {
+          presetTags = JSON.parse(savedPresetTags);
+        } catch (e) {
+          console.error('Failed to load preset tags:', e);
+          presetTags = [...defaultPresetTags];
+        }
+      } else {
+        presetTags = [...defaultPresetTags];
+      }
+      
+      // 从localStorage加载自定义标签
+      const savedCustomTags = localStorage.getItem('customTags');
+      if (savedCustomTags) {
+        try {
+          customTags = JSON.parse(savedCustomTags);
+        } catch (e) {
+          console.error('Failed to load custom tags:', e);
+          customTags = [];
+        }
+      }
+      
+      renderAllTags();
+    }
+    
+    // 渲染所有标签
+    function renderAllTags() {
+      // 清空容器（但保留Add Tag按钮）
+      const existingTags = presetTagsContainer.querySelectorAll('.preset-tag');
+      existingTags.forEach(tag => tag.remove());
+      
+      // 渲染预设标签
+      presetTags.forEach((tagText, index) => {
+        const tag = createTagElement(tagText, index + 1, 'preset');
+        presetTagsContainer.insertBefore(tag, addTagBtn);
+      });
+      
+      // 渲染自定义标签
+      customTags.forEach((tagText, index) => {
+        const shortcut = presetTags.length + index + 1;
+        if (shortcut <= 9) { // 只有前9个标签支持快捷键
+          const tag = createTagElement(tagText, shortcut, 'custom');
+          presetTagsContainer.insertBefore(tag, addTagBtn);
+        } else {
+          const tag = createTagElement(tagText, null, 'custom');
+          presetTagsContainer.insertBefore(tag, addTagBtn);
+        }
+      });
+    }
+    
+    // 创建标签元素
+    function createTagElement(tagText, shortcut, type) {
+      const tag = document.createElement('span');
+      tag.className = type === 'preset' ? 'preset-tag' : 'preset-tag custom-tag';
+      tag.textContent = tagText;
+      tag.dataset.tag = tagText;
+      tag.dataset.type = type;
+      
+      if (shortcut) {
+        tag.dataset.shortcut = shortcut;
+        tag.title = `Ctrl+${shortcut} to use${type === 'preset' ? ', double-click to edit' : ', right-click to delete'}`;
+      } else {
+        tag.title = type === 'preset' ? 'Double-click to edit' : 'Right-click to delete (no shortcut)';
+      }
+      
+      // 左键点击添加标签
+      tag.addEventListener('click', () => {
+        appendIssueTag(tagText);
+      });
+      
+      // 双击编辑标签
+      tag.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        startEditingTag(tag, tagText, type);
+      });
+      
+      // 右键删除自定义标签
+      if (type === 'custom') {
+        tag.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          if (confirm(`Delete custom tag "${tagText}"?`)) {
+            deleteCustomTag(tagText);
+          }
+        });
+      }
+      
+      return tag;
+    }
+    
+    // 开始编辑标签
+    function startEditingTag(tagElement, currentText, type) {
+      currentEditingTag = { element: tagElement, text: currentText, type: type };
+      editTagText.value = currentText;
+      editTagInput.classList.remove('hidden');
+      editTagText.focus();
+      editTagText.select();
+    }
+    
+    // 保存编辑的标签
+    function saveEditedTag() {
+      if (!currentEditingTag) return;
+      
+      const newText = editTagText.value.trim();
+      if (!newText) {
+        updateStatus('Tag name cannot be empty');
+        return;
+      }
+      
+      if (newText.length > 20) {
+        updateStatus('Tag name too long (max 20 characters)');
+        return;
+      }
+      
+      const { text: oldText, type } = currentEditingTag;
+      
+      // 检查是否与其他标签重复
+      const allTags = [...presetTags, ...customTags];
+      if (allTags.includes(newText) && newText !== oldText) {
+        updateStatus('Tag name already exists');
+        return;
+      }
+      
+      if (type === 'preset') {
+        const index = presetTags.indexOf(oldText);
+        if (index !== -1) {
+          presetTags[index] = newText;
+          savePresetTags();
+          updateStatus(`Preset tag "${oldText}" updated to "${newText}"`);
+        }
+      } else {
+        const index = customTags.indexOf(oldText);
+        if (index !== -1) {
+          customTags[index] = newText;
+          saveCustomTags();
+          updateStatus(`Custom tag "${oldText}" updated to "${newText}"`);
+        }
+      }
+      
+      renderAllTags();
+      cancelEditingTag();
+    }
+    
+    // 取消编辑标签
+    function cancelEditingTag() {
+      currentEditingTag = null;
+      editTagText.value = '';
+      editTagInput.classList.add('hidden');
+    }
+    
+    // 保存预设标签到localStorage
+    function savePresetTags() {
+      localStorage.setItem('presetTags', JSON.stringify(presetTags));
+    }
+    
+    // 初始化自定义标签
+    function initCustomTags() {
+      // 这个函数现在由initTagSystem()处理
+    }
+    
+    // 渲染自定义标签
+    function renderCustomTags() {
+      // 这个函数现在由renderAllTags()处理
+    }
+    
+    // 保存自定义标签到localStorage
+    function saveCustomTags() {
+      localStorage.setItem('customTags', JSON.stringify(customTags));
+    }
+    
+    // 添加自定义标签
+    function addCustomTag(tagText) {
+      if (!tagText || tagText.trim() === '') return;
+      
+      tagText = tagText.trim();
+      
+      // 检查是否已存在
+      const allTags = [...presetTags, ...customTags];
+      if (allTags.includes(tagText)) {
+        updateStatus('Tag already exists');
+        return;
+      }
+      
+      // 检查长度限制
+      if (tagText.length > 20) {
+        updateStatus('Tag name too long (max 20 characters)');
+        return;
+      }
+      
+      customTags.push(tagText);
+      saveCustomTags();
+      renderAllTags();
+      updateStatus(`Custom tag "${tagText}" added`);
+    }
+    
+    // 删除自定义标签
+    function deleteCustomTag(tagText) {
+      const index = customTags.indexOf(tagText);
+      if (index !== -1) {
+        customTags.splice(index, 1);
+        saveCustomTags();
+        renderAllTags();
+        updateStatus(`Custom tag "${tagText}" deleted`);
       }
     }
     
@@ -903,44 +1440,382 @@
       autoSave();
     });
     
-    // 修改键盘快捷键
+    // Auto-save function
+    async function autoSave() {
+      if (excelData && excelData.length > 1) {
+        try {
+          await ipcRenderer.invoke('save-excel', excelData);
+          console.log('Auto-saved data successfully');
+          // 显示简短的自动保存提示
+          const originalText = statusEl.textContent;
+          const originalBg = statusEl.style.backgroundColor;
+          const originalColor = statusEl.style.color;
+          
+          statusEl.textContent = '💾 Auto-saved';
+          statusEl.style.backgroundColor = '#e8f5e8';
+          statusEl.style.color = '#2e7d32';
+          
+          // 2秒后恢复原状态
+          setTimeout(() => {
+            statusEl.textContent = originalText;
+            statusEl.style.backgroundColor = originalBg;
+            statusEl.style.color = originalColor;
+          }, 2000);
+        } catch (error) {
+          console.error('Auto-save failed:', error);
+          // 不显示错误给用户，因为这是自动保存
+        }
+      }
+    }
+    
+    // Initialize
+    // loadExcelData(); // 注释掉自动加载，现在由文件选择触发
+    
+    // 初始化应用
+    function initApp() {
+      // 初始化开关状态
+      autoNextToggle.classList.add('active');
+      
+      // 初始化标签功能
+      initTagSystem();
+      
+      // 初始化自定义快捷键功能
+      initCustomShortcuts();
+    }
+    
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', initApp);
+    
+    // 添加标签按钮事件
+    addTagBtn.addEventListener('click', () => {
+      addTagInput.classList.remove('hidden');
+      newTagInput.focus();
+    });
+    
+    // 保存新标签
+    saveTagBtn.addEventListener('click', () => {
+      const tagText = newTagInput.value.trim();
+      if (tagText) {
+        addCustomTag(tagText);
+        newTagInput.value = '';
+        addTagInput.classList.add('hidden');
+      }
+    });
+    
+    // 取消添加标签
+    cancelTagBtn.addEventListener('click', () => {
+      newTagInput.value = '';
+      addTagInput.classList.add('hidden');
+    });
+    
+    // 新标签输入框回车事件
+    newTagInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        saveTagBtn.click();
+      } else if (e.key === 'Escape') {
+        cancelTagBtn.click();
+      }
+    });
+    
+    // 编辑标签事件监听器
+    saveEditBtn.addEventListener('click', saveEditedTag);
+    cancelEditBtn.addEventListener('click', cancelEditingTag);
+    
+    // 编辑标签输入框回车事件
+    editTagText.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        saveEditedTag();
+      } else if (e.key === 'Escape') {
+        cancelEditingTag();
+      }
+    });
+    
+    // 标签相关函数
+    function appendIssueTag(tagText) {
+      const currentValue = issueInput.value.trim();
+      if (currentValue) {
+        issueInput.value = currentValue + ', ' + tagText;
+      } else {
+        issueInput.value = tagText;
+      }
+      
+      // 更新Excel数据
+      if (excelData[currentIndex]) {
+        excelData[currentIndex][columns.issue] = issueInput.value;
+        updateStatus(`Added tag: ${tagText}`);
+        autoSave();
+      }
+    }
+    
+    function clearIssueInput() {
+      issueInput.value = '';
+      if (excelData[currentIndex]) {
+        excelData[currentIndex][columns.issue] = '';
+        updateStatus('Issue notes cleared');
+        autoSave();
+      }
+    }
+    
+    // 自动跳转开关事件
+    autoNextToggle.addEventListener('click', () => {
+      autoNextEnabled = !autoNextEnabled;
+      autoNextToggle.classList.toggle('active', autoNextEnabled);
+      updateStatus(autoNextEnabled ? 'Auto-advance enabled' : 'Auto-advance disabled');
+    });
+    
+    // 预加载页数设置事件
+    preloadCountSelect.addEventListener('change', (e) => {
+      maxPreloadPages = parseInt(e.target.value);
+      updateStatus(`Preload count set to ${maxPreloadPages} pages`);
+      
+      // 重新开始预加载
+      if (excelData && excelData.length > 1) {
+        startPreloading();
+      }
+    });
+    
+    // 页码跳转事件
+    jumpBtn.addEventListener('click', () => {
+      const targetPage = parseInt(pageJumpInput.value);
+      const maxPage = excelData ? excelData.length - 1 : 1;
+      
+      if (targetPage >= 1 && targetPage <= maxPage) {
+        loadPage(targetPage);
+        updateStatus(`Jumped to page ${targetPage}`);
+      } else {
+        showError(`Invalid page number. Please enter a number between 1 and ${maxPage}`);
+        pageJumpInput.value = currentIndex;
+      }
+    });
+    
+    // 页码输入框回车事件
+    pageJumpInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        jumpBtn.click();
+      }
+    });
+    
+    // 自定义快捷键事件监听器
+    resetShortcutsBtn.addEventListener('click', resetAllShortcuts);
+    
+    toggleShortcutsBtn.addEventListener('click', () => {
+      shortcutsVisible = !shortcutsVisible;
+      const shortcutsPanel = document.getElementById('shortcuts-config-panel');
+      if (shortcutsVisible) {
+        shortcutsPanel.style.display = 'block';
+        toggleShortcutsBtn.textContent = '⌨️ Hide Custom Shortcuts';
+        toggleShortcutsBtn.style.backgroundColor = '#dc3545';
+      } else {
+        shortcutsPanel.style.display = 'none';
+        toggleShortcutsBtn.textContent = '⌨️ Custom Shortcuts';
+        toggleShortcutsBtn.style.backgroundColor = '#6c757d';
+      }
+    });
+    
+    // 初始化时隐藏快捷键配置列表
+    window.addEventListener('load', () => {
+      const shortcutsPanel = document.getElementById('shortcuts-config-panel');
+      if (shortcutsPanel) {
+        shortcutsPanel.style.display = 'none'; // 默认隐藏
+        shortcutsVisible = false; // 设置状态为隐藏
+        toggleShortcutsBtn.textContent = '⌨️ Custom Shortcuts'; // 按钮文字
+        toggleShortcutsBtn.style.backgroundColor = '#6c757d'; // 灰色背景
+      }
+    });
+    
+    // File selection
+    fileBtn.addEventListener('click', async () => {
+      try {
+        const result = await ipcRenderer.invoke('select-file');
+        if (result.success) {
+          await loadExcelData();
+        }
+      } catch (error) {
+        showError(`File selection failed: ${error.message}`);
+      }
+    });
+    
+    // Load Excel data
+    async function loadExcelData() {
+      try {
+        updateStatus('Loading Excel file...');
+        const result = await ipcRenderer.invoke('load-excel');
+        
+        if (result.success) {
+          excelData = result.data;
+          columns = result.columns;
+          currentIndex = 1; // 从1开始，跳过标题行
+          
+          // 更新页码跳转输入框的最大值
+          const maxPage = excelData.length - 1;
+          pageJumpInput.max = maxPage;
+          pageJumpInput.value = 1;
+          
+          // Enable controls
+          prevBtn.disabled = false;
+          nextBtn.disabled = false;
+          passBtn.disabled = false;
+          failBtn.disabled = false;
+          screenshotBtn.disabled = false;
+          saveBtn.disabled = false;
+          reloadBtn.disabled = false;
+          openExternalBtn.disabled = false;
+          
+          updateStatus(`✅ Loaded ${maxPage} pages from Excel file`);
+          loadPage(1); // 加载第一页数据
+          
+          // 开始预加载
+          startPreloading();
+        } else {
+          showError(result.error || 'Failed to load Excel file');
+        }
+      } catch (error) {
+        showError(`Failed to load Excel: ${error.message}`);
+      }
+    }
+    
+    // 修改键盘快捷键，使用自定义快捷键系统
     document.addEventListener('keydown', (e) => {
-      // 如果用户在输入框中，不响应快捷键（除了Ctrl+S）
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-        if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
-          e.preventDefault();
-          saveBtn.click();
+      // 如果正在录制快捷键，记录按键
+      if (recordingShortcut) {
+        e.preventDefault();
+        
+        // ESC取消录制
+        if (e.key === 'Escape') {
+          cancelRecordingShortcut();
+          return;
+        }
+        
+        // 收集按键组合
+        const keys = [];
+        if (e.ctrlKey) keys.push('Control');
+        if (e.altKey) keys.push('Alt');
+        if (e.shiftKey) keys.push('Shift');
+        if (e.metaKey) keys.push('Meta');
+        
+        // 添加主键（过滤修饰键）
+        if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
+          keys.push(e.key);
+        }
+        
+        if (keys.length > 0) {
+          saveRecordedShortcut(keys);
         }
         return;
       }
       
-      switch(e.key) {
-        case 'ArrowLeft':
-          if (!prevBtn.disabled) loadPage(currentIndex - 1);
+      // 如果用户在输入框中，只响应部分快捷键
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        // 保存快捷键
+        if (isShortcutMatch(e, customShortcuts.save.keys)) {
           e.preventDefault();
-          break;
-        case 'ArrowRight':
-          if (!nextBtn.disabled) loadPage(currentIndex + 1);
+          saveBtn.click();
+          return;
+        }
+        
+        // Issue标签快捷键在输入框中也要响应
+        if ((e.ctrlKey || e.metaKey) && !isNaN(e.key)) {
           e.preventDefault();
-          break;
-        case 'ArrowUp':
-          // ↑ 代表 Pass
-          passBtn.click();
-          e.preventDefault();
-          break;
-        case 'ArrowDown':
-          // ↓ 代表 Fail
-          failBtn.click();
-          e.preventDefault();
-          break;
-        case 's':
-          if (e.ctrlKey || e.metaKey) {
-            saveBtn.click();
-            e.preventDefault();
+          const num = parseInt(e.key);
+          if (num === 0) {
+            clearIssueInput();
+          } else if (num >= 1 && num <= 9) {
+            const targetTag = document.querySelector(`[data-shortcut="${num}"]`);
+            if (targetTag) {
+              appendIssueTag(targetTag.dataset.tag);
+            }
           }
-          break;
+        }
+        return;
+      }
+      
+      // 检查所有自定义快捷键
+      for (const [action, config] of Object.entries(customShortcuts)) {
+        if (isShortcutMatch(e, config.keys)) {
+          e.preventDefault();
+          executeShortcutAction(action);
+          return;
+        }
+      }
+      
+      // Issue标签快捷键 (扩展到1-9)
+      if ((e.ctrlKey || e.metaKey) && !isNaN(e.key)) {
+        e.preventDefault();
+        const num = parseInt(e.key);
+        if (num === 0) {
+          clearIssueInput();
+        } else if (num >= 1 && num <= 9) {
+          const targetTag = document.querySelector(`[data-shortcut="${num}"]`);
+          if (targetTag) {
+            appendIssueTag(targetTag.dataset.tag);
+            // 视觉反馈
+            targetTag.classList.add('active');
+            setTimeout(() => targetTag.classList.remove('active'), 200);
+          }
+        }
       }
     });
+    
+    // 检查快捷键是否匹配
+    function isShortcutMatch(event, shortcutKeys) {
+      if (!shortcutKeys || shortcutKeys.length === 0) return false;
+      
+      const pressedKeys = [];
+      if (event.ctrlKey) pressedKeys.push('Control');
+      if (event.altKey) pressedKeys.push('Alt');
+      if (event.shiftKey) pressedKeys.push('Shift');
+      if (event.metaKey) pressedKeys.push('Meta');
+      
+      // 添加主键（过滤修饰键）
+      if (!['Control', 'Alt', 'Shift', 'Meta'].includes(event.key)) {
+        pressedKeys.push(event.key);
+      }
+      
+      // 比较按键组合
+      return pressedKeys.sort().join('+') === shortcutKeys.sort().join('+');
+    }
+    
+    // 执行快捷键动作
+    function executeShortcutAction(action) {
+      switch (action) {
+        case 'previous':
+          if (!prevBtn.disabled) loadPage(currentIndex - 1);
+          break;
+        case 'next':
+          if (!nextBtn.disabled) loadPage(currentIndex + 1);
+          break;
+        case 'pass':
+          if (!passBtn.disabled) passBtn.click();
+          break;
+        case 'fail':
+          if (!failBtn.disabled) failBtn.click();
+          break;
+        case 'save':
+          saveBtn.click();
+          break;
+        case 'screenshot':
+          if (!screenshotBtn.disabled) screenshotBtn.click();
+          break;
+        case 'reload':
+          if (!reloadBtn.disabled) reloadBtn.click();
+          break;
+        case 'openExternal':
+          if (!openExternalBtn.disabled) openExternalBtn.click();
+          break;
+        case 'clearTags':
+          clearIssueInput();
+          break;
+        case 'toggleAutoNext':
+          autoNextToggle.click();
+          break;
+        case 'focusJump':
+          pageJumpInput.focus();
+          pageJumpInput.select();
+          break;
+        default:
+          console.log('Unknown shortcut action:', action);
+      }
+    }
     
     // 添加窗口调整事件监听
     let resizeTimeout;
@@ -985,37 +1860,6 @@
       statusEl.style.backgroundColor = '#ffebee';
       statusEl.style.color = '#c62828';
     }
-    
-    // Auto-save function
-    async function autoSave() {
-      if (excelData && excelData.length > 1) {
-        try {
-          await ipcRenderer.invoke('save-excel', excelData);
-          console.log('Auto-saved data successfully');
-          // 显示简短的自动保存提示
-          const originalText = statusEl.textContent;
-          const originalBg = statusEl.style.backgroundColor;
-          const originalColor = statusEl.style.color;
-          
-          statusEl.textContent = '💾 Auto-saved';
-          statusEl.style.backgroundColor = '#e8f5e8';
-          statusEl.style.color = '#2e7d32';
-          
-          // 2秒后恢复原状态
-          setTimeout(() => {
-            statusEl.textContent = originalText;
-            statusEl.style.backgroundColor = originalBg;
-            statusEl.style.color = originalColor;
-          }, 2000);
-        } catch (error) {
-          console.error('Auto-save failed:', error);
-          // 不显示错误给用户，因为这是自动保存
-        }
-      }
-    }
-    
-    // Initialize
-    // loadExcelData(); // 注释掉自动加载，现在由文件选择触发
   </script>
 </body>
 </html> 
