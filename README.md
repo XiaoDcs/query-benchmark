@@ -1,6 +1,7 @@
-# 🚀 Web Page Scorer v1.0.3 - Advanced Electron Desktop App
+# 🚀 Web Page Scorer 
 
 一个功能强大的网页评分桌面应用，专为从 Excel 文件中高效批量评估网页而设计。
+当前版本：v1.0.3
 
 ## ✨ 主要功能
 
