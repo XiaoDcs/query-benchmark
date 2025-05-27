@@ -353,26 +353,50 @@
         
         <div class="settings-panel">
           <h3>⚙️ Settings</h3>
+          
+          <!-- Auto-advance setting -->
           <div class="toggle-container">
             <div class="toggle-switch" id="auto-next-toggle">
               <div class="toggle-slider"></div>
             </div>
             <label class="toggle-label">Auto-advance on Pass</label>
           </div>
+          
+          <!-- Preload count setting -->
+          <div style="margin: 10px 0;">
+            <label for="preload-count" style="display: block; margin-bottom: 5px; font-size: 13px; color: #333;">Preload pages:</label>
+            <select id="preload-count" style="width: 100%; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
+              <option value="0">Disabled</option>
+              <option value="3">3 pages</option>
+              <option value="5" selected>5 pages</option>
+              <option value="10">10 pages</option>
+              <option value="15">15 pages</option>
+            </select>
+          </div>
+          
+          <!-- Page jump -->
+          <div style="margin: 10px 0;">
+            <label for="page-jump" style="display: block; margin-bottom: 5px; font-size: 13px; color: #333;">Jump to page:</label>
+            <div style="display: flex; gap: 5px;">
+              <input type="number" id="page-jump" min="1" max="1" value="1" style="flex: 1; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" placeholder="Page #">
+              <button id="jump-btn" style="padding: 4px 12px; font-size: 12px;">Go</button>
+            </div>
+          </div>
+          
           <div class="preload-status" id="preload-status">
             Preloading: Ready
           </div>
+          
           <div class="shortcuts-info">
             <strong>Shortcuts:</strong><br>
             ↑ Pass (saves as 1)<br>
             ↓ Fail (saves as 0)<br>
-            ← → Navigate pages<br>
             Ctrl+S Save manually
           </div>
         </div>
         
         <div class="score-panel">
-          <h3>�� Score this page</h3>
+          <h3>Score this page</h3>
           <div class="score-options">
             <button id="pass-btn" class="score-button pass">✅ Pass (↑)</button>
             <button id="fail-btn" class="score-button fail">❌ Fail (↓)</button>
@@ -424,20 +448,56 @@
     const thumbnailPlaceholder = document.getElementById('thumbnail-placeholder');
     const autoNextToggle = document.getElementById('auto-next-toggle');
     const preloadStatusEl = document.getElementById('preload-status');
+    const preloadCountSelect = document.getElementById('preload-count');
+    const pageJumpInput = document.getElementById('page-jump');
+    const jumpBtn = document.getElementById('jump-btn');
     
     // App state
     let excelData = [];
-    let currentIndex = 0;
+    let currentIndex = 1; // 从1开始，跳过标题行
     let columns = {};
     let autoNextEnabled = true; // 默认开启自动跳转
     let preloadQueue = new Set(); // 预加载队列
     let preloadedPages = new Map(); // 预加载缓存
+    let maxPreloadPages = 5; // 默认预加载5页
     
     // 自动跳转开关事件
     autoNextToggle.addEventListener('click', () => {
       autoNextEnabled = !autoNextEnabled;
       autoNextToggle.classList.toggle('active', autoNextEnabled);
       updateStatus(autoNextEnabled ? 'Auto-advance enabled' : 'Auto-advance disabled');
+    });
+    
+    // 预加载页数设置事件
+    preloadCountSelect.addEventListener('change', (e) => {
+      maxPreloadPages = parseInt(e.target.value);
+      updateStatus(`Preload count set to ${maxPreloadPages} pages`);
+      
+      // 重新开始预加载
+      if (excelData && excelData.length > 1) {
+        startPreloading();
+      }
+    });
+    
+    // 页码跳转事件
+    jumpBtn.addEventListener('click', () => {
+      const targetPage = parseInt(pageJumpInput.value);
+      const maxPage = excelData ? excelData.length - 1 : 1;
+      
+      if (targetPage >= 1 && targetPage <= maxPage) {
+        loadPage(targetPage);
+        updateStatus(`Jumped to page ${targetPage}`);
+      } else {
+        showError(`Invalid page number. Please enter a number between 1 and ${maxPage}`);
+        pageJumpInput.value = currentIndex;
+      }
+    });
+    
+    // 页码输入框回车事件
+    pageJumpInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        jumpBtn.click();
+      }
     });
     
     // 初始化开关状态
@@ -464,7 +524,12 @@
         if (result.success) {
           excelData = result.data;
           columns = result.columns;
-          currentIndex = 0;
+          currentIndex = 1; // 从1开始，跳过标题行
+          
+          // 更新页码跳转输入框的最大值
+          const maxPage = excelData.length - 1;
+          pageJumpInput.max = maxPage;
+          pageJumpInput.value = 1;
           
           // Enable controls
           prevBtn.disabled = false;
@@ -473,8 +538,8 @@
           reloadBtn.disabled = false;
           openExternalBtn.disabled = false;
           
-          updateStatus(`✅ Loaded ${excelData.length - 1} pages from Excel file`);
-          loadPage(0);
+          updateStatus(`✅ Loaded ${maxPage} pages from Excel file`);
+          loadPage(1); // 加载第一页数据
           
           // 开始预加载
           startPreloading();
@@ -492,20 +557,29 @@
       preloadQueue.clear();
       preloadedPages.clear();
       
-      // 预加载当前页面后的10个页面
+      // 预加载当前页面后的页面
       preloadNextPages();
     }
     
     function preloadNextPages() {
-      if (!excelData || excelData.length <= 1) return;
+      if (!excelData || excelData.length <= 1 || maxPreloadPages === 0) {
+        updatePreloadStatus('Preloading disabled');
+        return;
+      }
       
-      const maxPreload = 10;
       let preloadCount = 0;
+      const dataLength = excelData.length; // 包含标题行的总长度
+      const maxDataIndex = dataLength - 1; // 最后一行数据的索引
       
-      for (let i = currentIndex + 1; i < Math.min(currentIndex + 1 + maxPreload, excelData.length); i++) {
+      for (let i = currentIndex + 1; i <= Math.min(currentIndex + maxPreloadPages, maxDataIndex); i++) {
         if (!preloadedPages.has(i) && !preloadQueue.has(i)) {
-          preloadQueue.add(i);
-          preloadCount++;
+          // 检查这一行是否有有效的URL
+          const rowData = excelData[i];
+          const url = rowData && rowData[columns.link];
+          if (url && url.trim() && url.startsWith('http')) {
+            preloadQueue.add(i);
+            preloadCount++;
+          }
         }
       }
       
@@ -513,7 +587,7 @@
         updatePreloadStatus(`Preloading ${preloadCount} pages...`);
         processPreloadQueue();
       } else {
-        updatePreloadStatus('All nearby pages preloaded');
+        updatePreloadStatus(`${preloadedPages.size} pages preloaded`);
       }
     }
     
@@ -527,7 +601,7 @@
         const rowData = excelData[pageIndex];
         const url = rowData && rowData[columns.link];
         
-        if (url) {
+        if (url && url.trim() && url.startsWith('http')) {
           // 在后台预加载URL
           const result = await ipcRenderer.invoke('preload-url', url);
           if (result.success) {
@@ -536,6 +610,7 @@
               loaded: true,
               timestamp: Date.now()
             });
+            console.log(`Successfully preloaded page ${pageIndex}: ${url}`);
           }
         }
       } catch (error) {
@@ -544,7 +619,7 @@
       
       // 继续处理队列中的下一个
       if (preloadQueue.size > 0) {
-        setTimeout(() => processPreloadQueue(), 100); // 100ms间隔避免过于频繁
+        setTimeout(() => processPreloadQueue(), 200); // 增加间隔到200ms减少卡顿
       } else {
         updatePreloadStatus(`${preloadedPages.size} pages preloaded`);
       }
@@ -564,20 +639,25 @@
       }
       
       const maxIndex = excelData.length - 1;
-      currentIndex = Math.max(0, Math.min(index, maxIndex));
+      currentIndex = Math.max(1, Math.min(index, maxIndex)); // 确保不小于1（跳过标题行）
+      
+      // Update page jump input value
+      pageJumpInput.value = currentIndex;
       
       // Update navigation buttons
-      prevBtn.disabled = currentIndex === 0;
+      prevBtn.disabled = currentIndex <= 1; // 第一页是索引1
       nextBtn.disabled = currentIndex >= maxIndex;
       
-      // Update progress
-      const progress = maxIndex > 0 ? (currentIndex / maxIndex) * 100 : 0;
+      // Update progress (基于实际数据页数，不包括标题行)
+      const totalDataPages = maxIndex; // 总数据页数
+      const currentDataPage = currentIndex; // 当前数据页
+      const progress = totalDataPages > 0 ? (currentDataPage / totalDataPages) * 100 : 0;
       progressFill.style.width = `${progress}%`;
       
       const rowData = excelData[currentIndex];
       if (!rowData) return;
       
-      // Update page counter
+      // Update page counter (显示给用户的页码，从1开始)
       pageCounterEl.textContent = `${currentIndex}/${maxIndex}`;
       
       // Load query data
@@ -664,7 +744,7 @@
       issueInput.value = issueData;
       
       // Load URL in webview
-      if (url) {
+      if (url && url.trim() && url.startsWith('http')) {
         // 检查是否已预加载
         if (preloadedPages.has(currentIndex)) {
           updateStatus(`Loading: ${url} (preloaded)`);
@@ -709,8 +789,8 @@
           updateStatus(`Error loading website: ${error.message}`);
         });
       } else {
-        webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">📝 No URL available for this entry</div>';
-        updateStatus('No URL available');
+        webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">📝 No valid URL available for this entry</div>';
+        updateStatus('No valid URL available');
       }
       
       // 触发下一批预加载
@@ -938,5 +1018,4 @@
     // loadExcelData(); // 注释掉自动加载，现在由文件选择触发
   </script>
 </body>
-</html> 
 </html> 

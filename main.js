@@ -86,11 +86,11 @@ app.on('window-all-closed', function () {
 // Handle loading URL in BrowserView
 ipcMain.handle('load-url', async (event, url) => {
   try {
-    if (webView && url) {
+    if (webView && url && url.trim() && url.startsWith('http')) {
       await webView.webContents.loadURL(url);
       return { success: true };
     }
-    return { success: false, error: 'No URL provided' };
+    return { success: false, error: 'Invalid or empty URL provided' };
   } catch (error) {
     console.error('Error loading URL:', error);
     return { success: false, error: error.message };
