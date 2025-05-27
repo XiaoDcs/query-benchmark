@@ -77,25 +77,38 @@ npm run build:mac
 npm run build:win
 
 # 使用构建脚本（推荐）
-./build.sh          # Mac/Linux
-build.bat           # Windows
+./script/build.sh          # Mac/Linux
+script/build.bat           # Windows
 ```
 
 ## 📂 项目结构
 
 ```
 query-benchmark/
-├── main.js              # Electron 主进程
-├── index.html           # 应用界面
-├── package.json         # 项目配置
-├── CHANGELOG.md         # 更新日志
-├── build.sh            # Mac/Linux 构建脚本
-├── build.bat           # Windows 构建脚本
-├── RELEASE.md          # 发布说明
-├── README.md           # 项目说明
-├── dist/               # 构建输出目录
-├── screenshots/        # 截图存储目录
-└── node_modules/       # 依赖包
+├── main.js                    # Electron 主进程
+├── index.html                 # 应用界面
+├── package.json               # 项目配置
+├── README.md                  # 项目说明
+├── doc/                       # 文档目录
+│   ├── CHANGELOG.md           # 更新日志
+│   ├── RELEASE.md             # 发布说明
+│   ├── HOW_TO_RELEASE.md      # 发布指南
+│   ├── FIXES_v1.0.2.md        # 修复记录
+│   ├── RELEASE_NOTES.md       # 发布说明
+│   ├── RELEASE_NOTES_v1.0.1.md # v1.0.1发布说明
+│   └── RELEASE_SUMMARY_v1.0.2.md # v1.0.2发布总结
+├── script/                    # 脚本目录
+│   ├── build.sh               # Mac/Linux 构建脚本
+│   ├── build.bat              # Windows 构建脚本
+│   └── prepare-release.sh     # 发布准备脚本
+├── test_data/                 # 测试数据目录
+│   └── test_link.xlsx         # 测试用Excel文件
+├── dist/                      # 构建输出目录
+├── screenshots/               # 截图存储目录
+├── assets/                    # 资源文件目录
+├── public/                    # 公共文件目录
+├── src/                       # 源代码目录
+└── node_modules/              # 依赖包
 ```
 
 ## 🎯 使用方法
@@ -240,4 +253,4 @@ MIT License
 - **v1.0.1** (2024-05-26): 智能预加载 + 自动跳转功能
 - **v1.0.0** (2024-05-26): 初始发布版本
 
-> 📋 完整更新日志请查看 [CHANGELOG.md](CHANGELOG.md)
+> 📋 完整更新日志请查看 [doc/CHANGELOG.md](doc/CHANGELOG.md)
