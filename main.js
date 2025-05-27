@@ -1,4 +1,4 @@
-const { app, BrowserWindow, BrowserView, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, BrowserView, ipcMain, dialog, globalShortcut } = require('electron');
 const path = require('path');
 const xlsx = require('xlsx');
 const fs = require('fs');
@@ -74,14 +74,80 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
   
+  // 注册全局快捷键
+  registerGlobalShortcuts();
+  
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
 app.on('window-all-closed', function () {
+  // 取消注册所有全局快捷键
+  globalShortcut.unregisterAll();
   if (process.platform !== 'darwin') app.quit();
 });
+
+// 注册全局快捷键函数
+function registerGlobalShortcuts() {
+  // 上箭头键 - Pass
+  globalShortcut.register('Up', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('global-shortcut', 'pass');
+    }
+  });
+  
+  // 下箭头键 - Fail
+  globalShortcut.register('Down', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('global-shortcut', 'fail');
+    }
+  });
+  
+  // Ctrl+S - Save
+  globalShortcut.register('CommandOrControl+S', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('global-shortcut', 'save');
+    }
+  });
+  
+  // F5 - Reload
+  globalShortcut.register('F5', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('global-shortcut', 'reload');
+    }
+  });
+  
+  // 左箭头键 - Previous
+  globalShortcut.register('Left', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('global-shortcut', 'previous');
+    }
+  });
+  
+  // 右箭头键 - Next
+  globalShortcut.register('Right', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('global-shortcut', 'next');
+    }
+  });
+  
+  // Ctrl+1~9 - Tags
+  for (let i = 1; i <= 9; i++) {
+    globalShortcut.register(`CommandOrControl+${i}`, () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('global-shortcut', 'tag', i);
+      }
+    });
+  }
+  
+  // Ctrl+0 - Clear tags
+  globalShortcut.register('CommandOrControl+0', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('global-shortcut', 'clear-tags');
+    }
+  });
+}
 
 // Handle loading URL in BrowserView
 ipcMain.handle('load-url', async (event, url) => {

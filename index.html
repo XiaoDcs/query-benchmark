@@ -498,7 +498,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 999999; /* 确保在最顶层 */
+      z-index: 2147483647; /* 使用最大z-index值确保在所有内容之上 */
       cursor: pointer;
     }
     .fullscreen-image {
@@ -708,6 +708,52 @@
 
   <script>
     const { ipcRenderer, shell } = require('electron');
+    
+    // 监听来自主进程的全局快捷键事件
+    ipcRenderer.on('global-shortcut', (event, action, param) => {
+      handleGlobalShortcut(action, param);
+    });
+    
+    // 处理全局快捷键
+    function handleGlobalShortcut(action, param) {
+      switch (action) {
+        case 'pass':
+          if (!passBtn.disabled) passBtn.click();
+          break;
+        case 'fail':
+          if (!failBtn.disabled) failBtn.click();
+          break;
+        case 'save':
+          saveBtn.click();
+          break;
+        case 'reload':
+          if (!reloadBtn.disabled) reloadBtn.click();
+          break;
+        case 'previous':
+          if (!prevBtn.disabled) prevBtn.click();
+          break;
+        case 'next':
+          if (!nextBtn.disabled) nextBtn.click();
+          break;
+        case 'tag':
+          // param是标签序号 (1-9)
+          if (param && param >= 1 && param <= 9) {
+            const targetTag = document.querySelector(`[data-shortcut="${param}"]`);
+            if (targetTag) {
+              appendIssueTag(targetTag.dataset.tag);
+              // 视觉反馈
+              targetTag.classList.add('active');
+              setTimeout(() => targetTag.classList.remove('active'), 200);
+            }
+          }
+          break;
+        case 'clear-tags':
+          clearIssueInput();
+          break;
+        default:
+          console.log('Unknown global shortcut:', action);
+      }
+    }
     
     // DOM elements
     const fileBtn = document.getElementById('file-btn');
@@ -1997,6 +2043,9 @@
     
     // 全屏显示图片
     function showFullscreenImage(src) {
+      // 隐藏BrowserView以确保图片显示在最上层
+      ipcRenderer.invoke('hide-browser-view');
+      
       // 创建全屏覆盖层
       const overlay = document.createElement('div');
       overlay.className = 'fullscreen-overlay';
@@ -2009,15 +2058,20 @@
       overlay.appendChild(img);
       document.body.appendChild(overlay);
       
-      // 点击关闭
-      overlay.addEventListener('click', () => {
+      // 关闭函数
+      const closeOverlay = () => {
         document.body.removeChild(overlay);
-      });
+        // 恢复BrowserView显示
+        adjustBrowserViewPosition();
+      };
+      
+      // 点击关闭
+      overlay.addEventListener('click', closeOverlay);
       
       // ESC键关闭
       const closeOnEsc = (e) => {
         if (e.key === 'Escape') {
-          document.body.removeChild(overlay);
+          closeOverlay();
           document.removeEventListener('keydown', closeOnEsc);
         }
       };
