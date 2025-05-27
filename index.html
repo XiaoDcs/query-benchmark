@@ -547,6 +547,7 @@
     <div class="controls">
       <div class="nav-buttons">
         <button id="file-btn">📁 Select Excel File</button>
+        <button id="download-sample-btn">📥 Download Sample Excel</button>
         <button id="prev-btn" disabled>← Previous</button>
         <button id="next-btn" disabled>Next →</button>
         <button id="reload-btn" disabled>🔄 Reload</button>
@@ -757,6 +758,7 @@
     
     // DOM elements
     const fileBtn = document.getElementById('file-btn');
+    const downloadSampleBtn = document.getElementById('download-sample-btn');
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
     const passBtn = document.getElementById('pass-btn');
@@ -1791,6 +1793,36 @@
         }
       } catch (error) {
         showError(`File selection failed: ${error.message}`);
+      }
+    });
+    
+    // Download sample Excel file
+    downloadSampleBtn.addEventListener('click', async () => {
+      try {
+        updateStatus('Preparing sample Excel template...');
+        const result = await ipcRenderer.invoke('download-sample-excel');
+        if (result.success) {
+          updateStatus(`✅ Sample template saved: ${result.fileName}`);
+          
+          // 显示成功消息和指引
+          const message = `
+            📥 样例Excel模板已下载！
+            
+            🔧 使用指引：
+            1. 编辑Excel文件，填入您的网页数据
+            2. 必填列：description/query（描述）、link（网页链接）
+            3. 可选列：thumbnail_link（缩略图）
+            4. 系统列：result（评分结果）、issue（问题备注）、screenshot（截图路径）
+            
+            📂 保存位置：${result.filePath}
+          `;
+          
+          alert(message);
+        } else {
+          showError(result.error || 'Failed to download sample template');
+        }
+      } catch (error) {
+        showError(`Download failed: ${error.message}`);
       }
     });
     

@@ -455,4 +455,44 @@ ipcMain.handle('load-screenshot', async (event, filepath) => {
     console.error('Error loading screenshot:', error);
     return { success: false, error: error.message };
   }
+});
+
+// Handle downloading sample Excel template
+ipcMain.handle('download-sample-excel', async () => {
+  try {
+    const { createSampleExcel } = require('./script/create_sample_excel.js');
+    
+    // 先创建样例文件（如果不存在）
+    const samplePath = path.join(__dirname, 'public', 'sample_template.xlsx');
+    if (!fs.existsSync(samplePath)) {
+      createSampleExcel();
+    }
+    
+    // 让用户选择保存位置
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'Save Sample Excel Template',
+      defaultPath: 'web_page_scorer_template.xlsx',
+      filters: [
+        { name: 'Excel Files', extensions: ['xlsx'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+    
+    if (!result.canceled && result.filePath) {
+      // 复制样例文件到用户选择的位置
+      fs.copyFileSync(samplePath, result.filePath);
+      
+      console.log('Sample Excel template saved to:', result.filePath);
+      return { 
+        success: true, 
+        filePath: result.filePath,
+        fileName: path.basename(result.filePath)
+      };
+    } else {
+      return { success: false, error: 'Save cancelled by user' };
+    }
+  } catch (error) {
+    console.error('Error downloading sample Excel template:', error);
+    return { success: false, error: error.message };
+  }
 }); 
