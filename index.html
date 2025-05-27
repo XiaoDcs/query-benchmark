@@ -498,13 +498,47 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 10000;
+      z-index: 999999; /* 确保在最顶层 */
       cursor: pointer;
     }
     .fullscreen-image {
       max-width: 90%;
       max-height: 90%;
       object-fit: contain;
+    }
+    
+    /* Issue自动Fail开关样式 */
+    .auto-fail-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      font-size: 12px;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 20px;
+      background-color: #ccc;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .toggle-switch.active {
+      background-color: #4CAF50;
+    }
+    .toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background-color: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+    }
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(20px);
     }
   </style>
 </head>
@@ -608,6 +642,14 @@
             <label class="toggle-label">Auto-advance on Pass</label>
           </div>
           
+          <!-- Auto-fail on issue setting -->
+          <div class="toggle-container">
+            <div class="toggle-switch" id="auto-fail-toggle">
+              <div class="toggle-slider"></div>
+            </div>
+            <label class="toggle-label">Auto-fail when Issue added</label>
+          </div>
+          
           <!-- Preload count setting -->
           <div style="margin: 10px 0;">
             <label for="preload-count" style="display: block; margin-bottom: 5px; font-size: 13px; color: #333;">Preload pages:</label>
@@ -690,6 +732,7 @@
     const thumbnailPreview = document.getElementById('thumbnail-preview');
     const thumbnailPlaceholder = document.getElementById('thumbnail-placeholder');
     const autoNextToggle = document.getElementById('auto-next-toggle');
+    const autoFailToggle = document.getElementById('auto-fail-toggle');
     const preloadStatusEl = document.getElementById('preload-status');
     const preloadCountSelect = document.getElementById('preload-count');
     const pageJumpInput = document.getElementById('page-jump');
@@ -714,6 +757,7 @@
     let currentIndex = 1; // 从1开始，跳过标题行
     let columns = {};
     let autoNextEnabled = true; // 默认开启自动跳转
+    let autoFailEnabled = false; // 默认关闭自动fail
     let preloadQueue = new Set(); // 预加载队列
     let preloadedPages = new Map(); // 预加载缓存
     let maxPreloadPages = 5; // 默认预加载5页
@@ -1460,6 +1504,16 @@
         excelData[currentIndex][columns.issue] = e.target.value;
         updateStatus('Issue note updated');
         
+        // 检查自动fail功能
+        if (autoFailEnabled) {
+          const issueText = e.target.value.trim();
+          if (issueText && excelData[currentIndex][columns.result] !== 0) {
+            // 有issue内容且当前不是fail状态，自动设为fail
+            setScore(0);
+            updateStatus('Auto-failed due to issue content');
+          }
+        }
+        
         // Clear existing timeout
         clearTimeout(issueInputTimeout);
         
@@ -1581,6 +1635,14 @@
       if (excelData[currentIndex]) {
         excelData[currentIndex][columns.issue] = issueInput.value;
         updateStatus(`Added tag: ${tagText}`);
+        
+        // 检查自动fail功能
+        if (autoFailEnabled && issueInput.value.trim() && excelData[currentIndex][columns.result] !== 0) {
+          // 有issue内容且当前不是fail状态，自动设为fail
+          setScore(0);
+          updateStatus('Auto-failed due to issue tag');
+        }
+        
         autoSave();
       }
     }
@@ -1599,6 +1661,13 @@
       autoNextEnabled = !autoNextEnabled;
       autoNextToggle.classList.toggle('active', autoNextEnabled);
       updateStatus(autoNextEnabled ? 'Auto-advance enabled' : 'Auto-advance disabled');
+    });
+    
+    // 自动Fail开关事件
+    autoFailToggle.addEventListener('click', () => {
+      autoFailEnabled = !autoFailEnabled;
+      autoFailToggle.classList.toggle('active', autoFailEnabled);
+      updateStatus(autoFailEnabled ? 'Auto-fail on issue enabled' : 'Auto-fail on issue disabled');
     });
     
     // 预加载页数设置事件
