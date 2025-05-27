@@ -123,6 +123,98 @@
       border-radius: 4px;
       flex-shrink: 0;
     }
+    .progress-overview-panel {
+      background-color: #f0f8ff;
+      padding: 12px;
+      border-radius: 4px;
+      border: 1px solid #b3d9ff;
+      flex-shrink: 0;
+    }
+    .progress-overview-panel h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: #1976d2;
+    }
+    .progress-stats {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding: 8px;
+      background-color: #ffffff;
+      border-radius: 4px;
+      border: 1px solid #e1f5fe;
+    }
+    .stat-item {
+      font-size: 11px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .progress-grid {
+      display: grid;
+      grid-template-columns: repeat(20, 1fr);
+      gap: 2px;
+      margin-bottom: 10px;
+      padding: 8px;
+      background-color: #ffffff;
+      border-radius: 4px;
+      border: 1px solid #e1f5fe;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .progress-item {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .progress-item:hover {
+      transform: scale(1.2);
+      z-index: 10;
+    }
+    .progress-item.pass {
+      background-color: #4caf50;
+    }
+    .progress-item.fail {
+      background-color: #f44336;
+    }
+    .progress-item.pending {
+      background-color: #e0e0e0;
+      border: 1px solid #bdbdbd;
+    }
+    .progress-item.current {
+      background-color: #2196f3;
+      box-shadow: 0 0 6px rgba(33, 150, 243, 0.6);
+    }
+    .progress-legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .legend-color {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+    .legend-color.pass {
+      background-color: #4caf50;
+    }
+    .legend-color.fail {
+      background-color: #f44336;
+    }
+    .legend-color.pending {
+      background-color: #e0e0e0;
+      border: 1px solid #bdbdbd;
+    }
+    .legend-color.current {
+      background-color: #2196f3;
+    }
     .info-panel h3, .settings-panel h3, .issue-panel h3 {
       margin: 0 0 10px 0;
       font-size: 16px;
@@ -594,6 +686,25 @@
           </div>
         </div>
         
+        <div class="progress-overview-panel">
+          <h3>📊 Progress Overview</h3>
+          <div class="progress-stats">
+            <span class="stat-item">✅ <span id="pass-count">0</span></span>
+            <span class="stat-item">❌ <span id="fail-count">0</span></span>
+            <span class="stat-item">⏸️ <span id="pending-count">0</span></span>
+            <span class="stat-item">📋 <span id="total-count">0</span></span>
+          </div>
+          <div class="progress-grid" id="progress-grid">
+            <!-- 进度方块将通过JavaScript动态生成 -->
+          </div>
+          <div class="progress-legend">
+            <span class="legend-item"><span class="legend-color pass"></span>Pass</span>
+            <span class="legend-item"><span class="legend-color fail"></span>Fail</span>
+            <span class="legend-item"><span class="legend-color pending"></span>Pending</span>
+            <span class="legend-item"><span class="legend-color current"></span>Current</span>
+          </div>
+        </div>
+        
         <div class="issue-panel">
           <h3>📝 Issue Notes</h3>
           
@@ -799,6 +910,13 @@
     const resetShortcutsBtn = document.getElementById('reset-shortcuts-btn');
     const toggleShortcutsBtn = document.getElementById('toggle-shortcuts-btn');
     const shortcutsConfig = document.querySelector('.shortcuts-config');
+    
+    // Progress Overview elements
+    const progressGrid = document.getElementById('progress-grid');
+    const passCountEl = document.getElementById('pass-count');
+    const failCountEl = document.getElementById('fail-count');
+    const pendingCountEl = document.getElementById('pending-count');
+    const totalCountEl = document.getElementById('total-count');
     
     // App state
     let excelData = [];
@@ -1460,6 +1578,9 @@
       
       // 触发下一批预加载
       preloadNextPages();
+      
+      // 更新Progress Overview
+      updateProgressOverview();
     }
     
     // Event listeners
@@ -1475,6 +1596,9 @@
       updateStatus('Marked as Passed');
       // Auto-save after scoring
       autoSave();
+      
+      // 更新Progress Overview
+      updateProgressOverview();
       
       // 自动跳转到下一页（如果开启了自动跳转）
       if (autoNextEnabled && currentIndex < excelData.length - 1) {
@@ -1492,6 +1616,9 @@
       updateStatus('Marked as Failed');
       // Auto-save after scoring
       autoSave();
+      
+      // 更新Progress Overview
+      updateProgressOverview();
     });
     
     screenshotBtn.addEventListener('click', async () => {
@@ -1562,6 +1689,9 @@
             currentScoreEl.style.color = '#d32f2f';
             updateContainerStatus(0);
             updateStatus('Auto-failed due to issue content');
+            
+            // 更新Progress Overview
+            updateProgressOverview();
           }
         }
         
@@ -1695,6 +1825,9 @@
           currentScoreEl.style.color = '#d32f2f';
           updateContainerStatus(0);
           updateStatus('Auto-failed due to issue tag');
+          
+          // 更新Progress Overview
+          updateProgressOverview();
         }
         
         autoSave();
@@ -1861,6 +1994,9 @@
           
           updateStatus(`✅ Loaded ${maxPage} pages from Excel file`);
           loadPage(1); // 加载第一页数据
+          
+          // 初始化Progress Overview
+          initializeProgressOverview();
           
           // 开始预加载
           startPreloading();
@@ -2108,6 +2244,94 @@
         }
       };
       document.addEventListener('keydown', closeOnEsc);
+    }
+    
+    // Progress Overview Functions
+    function initializeProgressOverview() {
+      if (!excelData || excelData.length <= 1) {
+        // 清空显示
+        progressGrid.innerHTML = '';
+        updateProgressStats(0, 0, 0, 0);
+        return;
+      }
+      
+      const totalPages = excelData.length - 1; // 排除标题行
+      updateProgressStats(0, 0, totalPages, totalPages);
+      createProgressGrid();
+      updateProgressOverview();
+    }
+    
+    function createProgressGrid() {
+      if (!excelData || excelData.length <= 1) return;
+      
+      const totalPages = excelData.length - 1; // 排除标题行
+      progressGrid.innerHTML = '';
+      
+      for (let i = 1; i <= totalPages; i++) { // 从1开始，跳过标题行
+        const item = document.createElement('div');
+        item.className = 'progress-item';
+        item.dataset.pageIndex = i;
+        item.title = `Page ${i}: ${(excelData[i][columns.description] || excelData[i][columns.query] || 'No description').substring(0, 50)}...`;
+        
+        // 点击跳转到对应页面
+        item.addEventListener('click', () => {
+          loadPage(i);
+        });
+        
+        progressGrid.appendChild(item);
+      }
+    }
+    
+    function updateProgressOverview() {
+      if (!excelData || excelData.length <= 1) return;
+      
+      let passCount = 0;
+      let failCount = 0;
+      let pendingCount = 0;
+      const totalPages = excelData.length - 1; // 排除标题行
+      
+      // 统计各状态的页面数量
+      for (let i = 1; i <= totalPages; i++) { // 从1开始，跳过标题行
+        const result = excelData[i][columns.result];
+        if (result === 1) {
+          passCount++;
+        } else if (result === 0) {
+          failCount++;
+        } else {
+          pendingCount++;
+        }
+      }
+      
+      // 更新统计数据
+      updateProgressStats(passCount, failCount, pendingCount, totalPages);
+      
+      // 更新网格显示
+      const items = progressGrid.querySelectorAll('.progress-item');
+      items.forEach((item, index) => {
+        const pageIndex = index + 1; // 对应实际的页面索引
+        const result = excelData[pageIndex][columns.result];
+        
+        // 移除所有状态类
+        item.classList.remove('pass', 'fail', 'pending', 'current');
+        
+        // 添加对应的状态类
+        if (pageIndex === currentIndex) {
+          item.classList.add('current');
+        } else if (result === 1) {
+          item.classList.add('pass');
+        } else if (result === 0) {
+          item.classList.add('fail');
+        } else {
+          item.classList.add('pending');
+        }
+      });
+    }
+    
+    function updateProgressStats(passCount, failCount, pendingCount, totalCount) {
+      passCountEl.textContent = passCount;
+      failCountEl.textContent = failCount;
+      pendingCountEl.textContent = pendingCount;
+      totalCountEl.textContent = totalCount;
     }
   </script>
 </body>
