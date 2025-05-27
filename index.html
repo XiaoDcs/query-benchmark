@@ -19,6 +19,7 @@
       padding: 15px;
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      transition: background-color 0.3s ease;
     }
     .controls {
       display: flex;
@@ -206,6 +207,7 @@
       border: 1px solid #ddd;
       border-radius: 4px;
       display: block;
+      cursor: pointer;
     }
     #thumbnail-placeholder {
       padding: 20px;
@@ -472,6 +474,37 @@
       color: #6c757d;
       margin-top: 5px;
       line-height: 1.3;
+    }
+
+    /* 容器状态背景色 */
+    .container.status-unscored {
+      background-color: white;
+    }
+    .container.status-pass {
+      background-color: #e8f5e8;
+    }
+    .container.status-fail {
+      background-color: #fde7e7;
+    }
+
+    /* 全屏图片查看器 */
+    .fullscreen-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      cursor: pointer;
+    }
+    .fullscreen-image {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
     }
   </style>
 </head>
@@ -1216,12 +1249,15 @@
       if (resultData === 1) {
         currentScoreEl.textContent = '✅ Passed (1)';
         currentScoreEl.style.color = '#388e3c';
+        updateContainerStatus(1);
       } else if (resultData === 0) {
         currentScoreEl.textContent = '❌ Failed (0)';
         currentScoreEl.style.color = '#d32f2f';
+        updateContainerStatus(0);
       } else {
         currentScoreEl.textContent = 'Not scored';
         currentScoreEl.style.color = '#666';
+        updateContainerStatus(null);
       }
       
       // Load thumbnail
@@ -1343,6 +1379,7 @@
       excelData[currentIndex][columns.result] = 1;
       currentScoreEl.textContent = '✅ Passed (1)';
       currentScoreEl.style.color = '#388e3c';
+      updateContainerStatus(1);
       updateStatus('Marked as Passed');
       // Auto-save after scoring
       autoSave();
@@ -1359,6 +1396,7 @@
       excelData[currentIndex][columns.result] = 0;
       currentScoreEl.textContent = '❌ Failed (0)';
       currentScoreEl.style.color = '#d32f2f';
+      updateContainerStatus(0);
       updateStatus('Marked as Failed');
       // Auto-save after scoring
       autoSave();
@@ -1635,6 +1673,13 @@
       }
     });
     
+    // 缩略图点击放大
+    thumbnailPreview.addEventListener('click', () => {
+      if (thumbnailPreview.src && !thumbnailPreview.classList.contains('hidden')) {
+        showFullscreenImage(thumbnailPreview.src);
+      }
+    });
+
     // Load Excel data
     async function loadExcelData() {
       try {
@@ -1859,6 +1904,49 @@
       statusEl.textContent = message;
       statusEl.style.backgroundColor = '#ffebee';
       statusEl.style.color = '#c62828';
+    }
+    
+    // 更新容器背景状态
+    function updateContainerStatus(score) {
+      const container = document.querySelector('.container');
+      container.classList.remove('status-unscored', 'status-pass', 'status-fail');
+      
+      if (score === 1) {
+        container.classList.add('status-pass');
+      } else if (score === 0) {
+        container.classList.add('status-fail');
+      } else {
+        container.classList.add('status-unscored');
+      }
+    }
+    
+    // 全屏显示图片
+    function showFullscreenImage(src) {
+      // 创建全屏覆盖层
+      const overlay = document.createElement('div');
+      overlay.className = 'fullscreen-overlay';
+      
+      // 创建全屏图片
+      const img = document.createElement('img');
+      img.className = 'fullscreen-image';
+      img.src = src;
+      
+      overlay.appendChild(img);
+      document.body.appendChild(overlay);
+      
+      // 点击关闭
+      overlay.addEventListener('click', () => {
+        document.body.removeChild(overlay);
+      });
+      
+      // ESC键关闭
+      const closeOnEsc = (e) => {
+        if (e.key === 'Escape') {
+          document.body.removeChild(overlay);
+          document.removeEventListener('keydown', closeOnEsc);
+        }
+      };
+      document.addEventListener('keydown', closeOnEsc);
     }
   </script>
 </body>
