@@ -6,6 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -29,10 +32,18 @@ jobs:
     - name: Build for macOS
       if: matrix.os == 'macos-latest'
       run: npm run build:mac
-      
+      env:
+        SKIP_PUBLISH: true
+        GH_TOKEN: ""
+        GITHUB_TOKEN: ""
+        
     - name: Build for Windows
       if: matrix.os == 'windows-latest'
       run: npm run build:win
+      env:
+        SKIP_PUBLISH: true
+        GH_TOKEN: ""
+        GITHUB_TOKEN: ""
       
     - name: Upload macOS artifacts
       if: matrix.os == 'macos-latest'
