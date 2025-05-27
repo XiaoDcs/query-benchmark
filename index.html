@@ -198,110 +198,140 @@
     }
     #thumbnail-preview, #thumbnail-placeholder {
       max-height: 80px;
-      margin-top: 6px;
-    }
-    
-    /* 紧凑的问题输入区域 */
-    #issue-input {
-      width: 100%;
-      height: 60px;
-      margin-top: 6px;
-      padding: 6px;
+      max-width: 100%;
+      margin-top: 8px;
       border: 1px solid #ddd;
       border-radius: 4px;
-      font-family: inherit;
-      font-size: 12px;
-      resize: vertical;
+      display: block;
     }
-    
-    /* 按钮样式优化 */
-    #screenshot-btn, #open-external-btn {
-      width: 100%;
-      margin-top: 8px;
-      padding: 8px;
+    #thumbnail-placeholder {
+      padding: 20px;
+      background-color: #f5f5f5;
+      text-align: center;
+      color: #666;
       font-size: 12px;
     }
     
-    #open-external-btn {
-      background: #1976d2;
-    }
-    
-    /* 移动端适配 */
-    @media (max-width: 1200px) {
+    /* 移动端响应式 */
+    @media (max-width: 900px) {
       .content {
         flex-direction: column;
         height: auto;
-        min-height: 500px;
-      }
-      .web-view {
-        min-width: auto;
-        height: 500px; /* 增加移动端高度 */
+        min-height: auto;
       }
       .sidebar {
         width: 100%;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 10px;
+        min-width: auto;
+        max-height: none;
       }
-      .info-panel, .score-panel {
-        flex: 1;
-        min-width: 280px;
+      .web-view {
+        min-width: auto;
+        height: 50vh;
+        min-height: 400px;
+      }
+      .controls {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .nav-buttons, .action-buttons {
+        justify-content: center;
+        flex-wrap: wrap;
       }
     }
     
-    @media (max-width: 768px) {
-      .sidebar {
-        flex-direction: column;
-      }
-      .info-panel, .score-panel {
-        flex: none;
-      }
+    /* 自动跳转开关样式 */
+    .settings-panel {
+      background-color: #f0f8ff;
+      padding: 12px;
+      border-radius: 4px;
+      border: 1px solid #b3d9ff;
+      flex-shrink: 0;
+    }
+    .settings-panel h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: #1976d2;
+    }
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 24px;
+      background-color: #ccc;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .toggle-switch.active {
+      background-color: #4285f4;
+    }
+    .toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background-color: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+    }
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(26px);
+    }
+    .toggle-label {
+      font-size: 13px;
+      color: #333;
+    }
+    .preload-status {
+      font-size: 11px;
+      color: #666;
+      margin-top: 8px;
+      padding: 6px;
+      background-color: #f8f9fa;
+      border-radius: 3px;
+    }
+    .shortcuts-info {
+      font-size: 11px;
+      color: #666;
+      margin-top: 8px;
+      line-height: 1.4;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🚀 Web Page Scorer - Electron</h1>
-    
-    <div id="file-status" style="text-align: center; margin-bottom: 15px; padding: 10px; background: #e3f2fd; border-radius: 4px; font-size: 14px;">
-      <span id="file-info">📄 Waiting for Excel file selection...</span>
-      <button id="select-file-btn" style="margin-left: 15px; padding: 6px 12px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">📁 Choose File</button>
-    </div>
+    <h1>🌐 Web Page Scorer</h1>
     
     <div class="controls">
       <div class="nav-buttons">
+        <button id="file-btn">📁 Select Excel File</button>
         <button id="prev-btn" disabled>← Previous</button>
-        <button id="next-btn">Next →</button>
-        <span style="margin: 0 15px; display: flex; align-items: center; font-size: 14px; color: #666;">
-          <span id="page-index">0</span> / <span id="total-pages">0</span>
-        </span>
+        <button id="next-btn" disabled>Next →</button>
+        <button id="reload-btn" disabled>🔄 Reload</button>
       </div>
-      
-      <div class="quick-actions" style="display: flex; gap: 8px; align-items: center;">
-        <button id="pass-btn-top" class="score-button pass" style="min-width: 80px;">✅ Pass (1)</button>
-        <button id="fail-btn-top" class="score-button fail" style="min-width: 80px;">❌ Fail (0)</button>
-        <button id="screenshot-btn-top" style="background: #ff9800;">📸 Screenshot</button>
-        <button id="open-external-btn-top" style="background: #1976d2;">🔗 Browser</button>
-      </div>
-      
       <div class="action-buttons">
-        <button id="reload-btn">🔄 Reload Data</button>
-        <button id="save-btn">💾 Save Results</button>
+        <button id="save-btn" disabled>💾 Save</button>
+        <button id="open-external-btn" disabled>🔗 Open in Browser</button>
       </div>
-    </div>
-    
-    <div class="progress-bar">
-      <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
     </div>
     
     <div class="content">
       <div class="web-view">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
         <div class="web-container">
-          <div id="web-frame" class="web-frame" style="background: #f5f5f5; display: flex; align-items: center; justify-content: center; color: #666;">
-            <div>Web content will appear here</div>
-          </div>
-          <div id="loading" class="loading">
-            <div>Loading Excel data...</div>
+          <div id="web-frame" class="web-frame">
+            <div style="text-align: center; color: #666; padding: 20px;">
+              <div style="font-size: 48px; margin-bottom: 20px;">📄</div>
+              <div style="font-size: 18px; margin-bottom: 10px;">Please select an Excel file to start</div>
+              <div style="font-size: 14px; color: #999;">Click "Select Excel File" button above</div>
+            </div>
           </div>
         </div>
       </div>
@@ -309,287 +339,297 @@
       <div class="sidebar">
         <div class="info-panel">
           <h3>📋 Page Information</h3>
-          <p><strong>Description:</strong><br><span id="description-text">-</span></p>
-          <p><strong>URL:</strong><br><span id="url-link" class="url-display">-</span></p>
+          <p><strong>Progress:</strong> <span id="page-counter">-</span></p>
+          <p><strong>Query:</strong> <span id="current-query">-</span></p>
+          <p><strong>URL:</strong> <a href="#" id="current-url" class="url-display" target="_blank">-</a></p>
+          <p><strong>Current Score:</strong> <span id="current-score">Not scored</span></p>
+          
           <div id="thumbnail-container">
-            <strong>Preview:</strong><br>
-            <img id="thumbnail-preview" style="max-width: 100%; max-height: 80px; border: 1px solid #ddd; border-radius: 4px; margin-top: 6px; display: none;" alt="Page preview" />
-            <div id="thumbnail-placeholder" style="display: flex; align-items: center; justify-content: center; height: 60px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; margin-top: 6px; color: #666; font-size: 12px;">No preview available</div>
+            <strong>Thumbnail:</strong>
+            <img id="thumbnail-preview" class="hidden" alt="Thumbnail" />
+            <div id="thumbnail-placeholder">No thumbnail available</div>
+          </div>
+        </div>
+        
+        <div class="settings-panel">
+          <h3>⚙️ Settings</h3>
+          <div class="toggle-container">
+            <div class="toggle-switch" id="auto-next-toggle">
+              <div class="toggle-slider"></div>
+            </div>
+            <label class="toggle-label">Auto-advance on Pass</label>
+          </div>
+          <div class="preload-status" id="preload-status">
+            Preloading: Ready
+          </div>
+          <div class="shortcuts-info">
+            <strong>Shortcuts:</strong><br>
+            ↑ Pass (saves as 1)<br>
+            ↓ Fail (saves as 0)<br>
+            ← → Navigate pages<br>
+            Ctrl+S Save manually
           </div>
         </div>
         
         <div class="score-panel">
-          <h3>⭐ Current Status</h3>
-          <p><strong>Score:</strong> <span id="current-score">Not scored</span></p>
+          <h3>�� Score this page</h3>
+          <div class="score-options">
+            <button id="pass-btn" class="score-button pass">✅ Pass (↑)</button>
+            <button id="fail-btn" class="score-button fail">❌ Fail (↓)</button>
+          </div>
+          <button id="screenshot-btn" style="width: 100%; margin-top: 8px;">📸 Take Screenshot</button>
           
-          <div style="margin: 10px 0;">
-            <strong>Issue Notes:</strong>
-            <textarea id="issue-input" placeholder="Enter any issues or notes about this page..."></textarea>
+          <div style="margin-top: 15px;">
+            <label for="issue-input" style="display: block; margin-bottom: 5px; font-weight: bold;">Issue Notes:</label>
+            <textarea id="issue-input" rows="3" style="width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 8px; resize: vertical;" placeholder="Enter any issues or notes..."></textarea>
           </div>
           
           <div style="margin-top: 10px;">
-            <strong>Screenshot:</strong>
             <img id="screenshot-preview" class="screenshot-preview hidden" alt="Screenshot" />
-            <div id="no-screenshot" style="display: flex; align-items: center; justify-content: center; height: 60px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; margin-top: 6px; color: #666; font-size: 12px;">No screenshot taken</div>
+            <div id="no-screenshot" style="text-align: center; padding: 20px; background-color: #f5f5f5; border: 1px dashed #ccc; border-radius: 4px; color: #666; font-size: 12px;">
+              📷 No screenshot taken
+            </div>
           </div>
         </div>
         
-        <div id="status" class="status">Ready</div>
+        <div class="status" id="status">Ready to start</div>
       </div>
     </div>
   </div>
 
   <script>
-    console.log('Script starting...');
+    const { ipcRenderer, shell } = require('electron');
     
-    // Prevent any dragEvent issues
-    window.dragEvent = null;
-    
-    let ipcRenderer, shell;
-    
-    try {
-      const electron = require('electron');
-      ipcRenderer = electron.ipcRenderer;
-      shell = electron.shell;
-      console.log('Electron modules loaded successfully');
-    } catch (error) {
-      console.error('Failed to load Electron modules:', error);
-      document.body.innerHTML = '<div style="padding: 20px; font-family: Arial;"><h1>Error Loading Electron Modules</h1><p>' + error.message + '</p></div>';
-      throw error;
-    }
-
-    // State
-    let excelData = [];
-    let columns = {};
-    let currentIndex = 1;
-    
-    // DOM Elements
-    const webFrame = document.getElementById('web-frame');
-    const loadingIndicator = document.getElementById('loading');
-    const fileStatusDiv = document.getElementById('file-status');
-    const fileInfoSpan = document.getElementById('file-info');
-    const selectFileBtn = document.getElementById('select-file-btn');
-    const descriptionText = document.getElementById('description-text');
-    const urlLink = document.getElementById('url-link');
-    const thumbnailPreview = document.getElementById('thumbnail-preview');
-    const thumbnailPlaceholder = document.getElementById('thumbnail-placeholder');
-    const pageIndexEl = document.getElementById('page-index');
-    const totalPagesEl = document.getElementById('total-pages');
+    // DOM elements
+    const fileBtn = document.getElementById('file-btn');
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
-    const passBtn = document.getElementById('pass-btn-top');
-    const failBtn = document.getElementById('fail-btn-top');
-    const currentScoreEl = document.getElementById('current-score');
-    const issueInput = document.getElementById('issue-input');
-    const screenshotBtn = document.getElementById('screenshot-btn-top');
-    const screenshotPreview = document.getElementById('screenshot-preview');
-    const noScreenshotDiv = document.getElementById('no-screenshot');
+    const passBtn = document.getElementById('pass-btn');
+    const failBtn = document.getElementById('fail-btn');
+    const screenshotBtn = document.getElementById('screenshot-btn');
     const saveBtn = document.getElementById('save-btn');
     const reloadBtn = document.getElementById('reload-btn');
+    const openExternalBtn = document.getElementById('open-external-btn');
+    const webFrame = document.getElementById('web-frame');
+    const pageCounterEl = document.getElementById('page-counter');
+    const currentQueryEl = document.getElementById('current-query');
+    const currentUrlEl = document.getElementById('current-url');
+    const currentScoreEl = document.getElementById('current-score');
+    const issueInput = document.getElementById('issue-input');
+    const screenshotPreview = document.getElementById('screenshot-preview');
+    const noScreenshotDiv = document.getElementById('no-screenshot');
     const statusEl = document.getElementById('status');
     const progressFill = document.getElementById('progress-fill');
-    const openExternalBtn = document.getElementById('open-external-btn-top');
+    const thumbnailPreview = document.getElementById('thumbnail-preview');
+    const thumbnailPlaceholder = document.getElementById('thumbnail-placeholder');
+    const autoNextToggle = document.getElementById('auto-next-toggle');
+    const preloadStatusEl = document.getElementById('preload-status');
     
-    console.log('DOM elements found');
+    // App state
+    let excelData = [];
+    let currentIndex = 0;
+    let columns = {};
+    let autoNextEnabled = true; // 默认开启自动跳转
+    let preloadQueue = new Set(); // 预加载队列
+    let preloadedPages = new Map(); // 预加载缓存
     
-    // File selection event listener
-    selectFileBtn.addEventListener('click', async () => {
+    // 自动跳转开关事件
+    autoNextToggle.addEventListener('click', () => {
+      autoNextEnabled = !autoNextEnabled;
+      autoNextToggle.classList.toggle('active', autoNextEnabled);
+      updateStatus(autoNextEnabled ? 'Auto-advance enabled' : 'Auto-advance disabled');
+    });
+    
+    // 初始化开关状态
+    autoNextToggle.classList.add('active');
+    
+    // File selection
+    fileBtn.addEventListener('click', async () => {
       try {
-        updateStatus('Opening file selection dialog...');
-        await ipcRenderer.invoke('select-excel-file');
+        const result = await ipcRenderer.invoke('select-file');
+        if (result.success) {
+          await loadExcelData();
+        }
       } catch (error) {
         showError(`File selection failed: ${error.message}`);
       }
     });
     
-    // Listen for file selection events from main process
-    ipcRenderer.on('excel-file-selected', (event, data) => {
-      fileInfoSpan.textContent = `📄 Selected: ${data.filename}`;
-      fileStatusDiv.style.background = '#e8f5e8';
-      updateStatus(`Excel file selected: ${data.filename}`);
-      
-      // Auto-load the Excel data
-      loadExcelData();
-    });
-    
-    ipcRenderer.on('excel-file-cancelled', () => {
-      fileInfoSpan.textContent = '📄 No file selected - Click "Choose File" to select an Excel file';
-      fileStatusDiv.style.background = '#fff3cd';
-      updateStatus('File selection cancelled');
-    });
-    
-    ipcRenderer.on('excel-file-error', (event, errorMessage) => {
-      fileInfoSpan.textContent = `❌ Error: ${errorMessage}`;
-      fileStatusDiv.style.background = '#f8d7da';
-      showError(`File selection error: ${errorMessage}`);
-    });
-    
-    // Function to adjust BrowserView position
-    function adjustBrowserViewPosition() {
-      const rect = webFrame.getBoundingClientRect();
-      
-      // Only adjust if element is visible
-      if (rect.width === 0 || rect.height === 0) {
-        return;
-      }
-      
-      // Use viewport-relative positioning (BrowserView is positioned relative to window, not page)
-      const elementBounds = {
-        x: Math.round(rect.left),
-        y: Math.round(rect.top),
-        width: Math.round(rect.width),
-        height: Math.round(rect.height)
-      };
-      
-      console.log('Web frame bounds (viewport relative):', elementBounds);
-      
-      // Send bounds to main process
-      ipcRenderer.invoke('adjust-browser-view', elementBounds)
-        .then(result => {
-          if (result.success) {
-            console.log('BrowserView position adjusted successfully');
-          } else {
-            console.error('Failed to adjust BrowserView:', result.error);
-          }
-        })
-        .catch(error => {
-          console.error('Error adjusting BrowserView:', error);
-        });
-    }
-    
-    // Handle scroll with debouncing
-    let scrollTimeout;
-    function handleScroll() {
-      // Hide BrowserView during scroll
-      ipcRenderer.invoke('hide-browser-view');
-      
-      // Clear existing timeout
-      clearTimeout(scrollTimeout);
-      
-      // Adjust position after scroll stops
-      scrollTimeout = setTimeout(() => {
-        adjustBrowserViewPosition();
-        ipcRenderer.invoke('show-browser-view');
-      }, 100);
-    }
-    
-    // Adjust position when window loads and resizes
-    window.addEventListener('load', adjustBrowserViewPosition);
-    window.addEventListener('resize', adjustBrowserViewPosition);
-    window.addEventListener('scroll', handleScroll);
-    
     // Load Excel data
     async function loadExcelData() {
       try {
-        updateStatus('Loading Excel data...');
+        updateStatus('Loading Excel file...');
         const result = await ipcRenderer.invoke('load-excel');
         
-        excelData = result.data;
-        columns = result.columns;
-        
-        if (excelData.length <= 1) {
-          showError('No data found in Excel file');
-          return;
+        if (result.success) {
+          excelData = result.data;
+          columns = result.columns;
+          currentIndex = 0;
+          
+          // Enable controls
+          prevBtn.disabled = false;
+          nextBtn.disabled = false;
+          saveBtn.disabled = false;
+          reloadBtn.disabled = false;
+          openExternalBtn.disabled = false;
+          
+          updateStatus(`✅ Loaded ${excelData.length - 1} pages from Excel file`);
+          loadPage(0);
+          
+          // 开始预加载
+          startPreloading();
+        } else {
+          showError(result.error || 'Failed to load Excel file');
         }
-        
-        totalPagesEl.textContent = excelData.length - 1;
-        loadingIndicator.style.display = 'none';
-        
-        loadPage(currentIndex);
-        updateStatus('Excel data loaded successfully');
-        
       } catch (error) {
-        showError(`Failed to load Excel data: ${error.message}`);
-        loadingIndicator.style.display = 'none';
+        showError(`Failed to load Excel: ${error.message}`);
       }
     }
     
-    // Load page data
-    function loadPage(index) {
-      if (index < 1 || index >= excelData.length) return;
+    // 预加载逻辑
+    function startPreloading() {
+      // 清空之前的预加载
+      preloadQueue.clear();
+      preloadedPages.clear();
       
-      // Auto-save before switching pages (except for initial load)
-      if (currentIndex !== index && excelData.length > 1) {
+      // 预加载当前页面后的10个页面
+      preloadNextPages();
+    }
+    
+    function preloadNextPages() {
+      if (!excelData || excelData.length <= 1) return;
+      
+      const maxPreload = 10;
+      let preloadCount = 0;
+      
+      for (let i = currentIndex + 1; i < Math.min(currentIndex + 1 + maxPreload, excelData.length); i++) {
+        if (!preloadedPages.has(i) && !preloadQueue.has(i)) {
+          preloadQueue.add(i);
+          preloadCount++;
+        }
+      }
+      
+      if (preloadCount > 0) {
+        updatePreloadStatus(`Preloading ${preloadCount} pages...`);
+        processPreloadQueue();
+      } else {
+        updatePreloadStatus('All nearby pages preloaded');
+      }
+    }
+    
+    async function processPreloadQueue() {
+      if (preloadQueue.size === 0) return;
+      
+      const pageIndex = preloadQueue.values().next().value;
+      preloadQueue.delete(pageIndex);
+      
+      try {
+        const rowData = excelData[pageIndex];
+        const url = rowData && rowData[columns.link];
+        
+        if (url) {
+          // 在后台预加载URL
+          const result = await ipcRenderer.invoke('preload-url', url);
+          if (result.success) {
+            preloadedPages.set(pageIndex, {
+              url: url,
+              loaded: true,
+              timestamp: Date.now()
+            });
+          }
+        }
+      } catch (error) {
+        console.log(`Preload failed for page ${pageIndex}:`, error);
+      }
+      
+      // 继续处理队列中的下一个
+      if (preloadQueue.size > 0) {
+        setTimeout(() => processPreloadQueue(), 100); // 100ms间隔避免过于频繁
+      } else {
+        updatePreloadStatus(`${preloadedPages.size} pages preloaded`);
+      }
+    }
+    
+    function updatePreloadStatus(message) {
+      preloadStatusEl.textContent = message;
+    }
+    
+    // Load specific page
+    function loadPage(index) {
+      if (!excelData || excelData.length <= 1) return;
+      
+      // Auto-save previous page when navigating
+      if (currentIndex !== index) {
         autoSave();
       }
       
-      currentIndex = index;
-      const rowData = excelData[index];
+      const maxIndex = excelData.length - 1;
+      currentIndex = Math.max(0, Math.min(index, maxIndex));
       
-      // Update UI
-      prevBtn.disabled = currentIndex <= 1;
-      nextBtn.disabled = currentIndex >= excelData.length - 1;
-      pageIndexEl.textContent = currentIndex;
+      // Update navigation buttons
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.disabled = currentIndex >= maxIndex;
       
-      const progress = ((currentIndex) / (excelData.length - 1)) * 100;
+      // Update progress
+      const progress = maxIndex > 0 ? (currentIndex / maxIndex) * 100 : 0;
       progressFill.style.width = `${progress}%`;
       
-      descriptionText.textContent = rowData[columns.description] || 'No description';
+      const rowData = excelData[currentIndex];
+      if (!rowData) return;
       
-      const url = rowData[columns.link] || '';
-      urlLink.textContent = url || 'No URL';
+      // Update page counter
+      pageCounterEl.textContent = `${currentIndex}/${maxIndex}`;
       
-      // Load thumbnail preview
-      const thumbnailUrl = rowData[columns.image] || '';
-      if (thumbnailUrl) {
-        thumbnailPreview.style.display = 'none';
-        thumbnailPlaceholder.style.display = 'flex';
-        thumbnailPlaceholder.textContent = '🔄 Loading preview...';
-        
-        // Create a new image to test loading
-        const testImg = new Image();
-        testImg.onload = () => {
-          thumbnailPreview.src = thumbnailUrl;
-          thumbnailPreview.style.display = 'block';
-          thumbnailPlaceholder.style.display = 'none';
-          // Make preview clickable to view full size
-          thumbnailPreview.onclick = () => {
-            const newWindow = window.open();
-            newWindow.document.write(`<img src="${thumbnailUrl}" style="max-width: 100%; max-height: 100vh; object-fit: contain;">`);
-          };
-        };
-        testImg.onerror = () => {
-          thumbnailPreview.style.display = 'none';
-          thumbnailPlaceholder.style.display = 'flex';
-          thumbnailPlaceholder.innerHTML = '❌ Preview failed to load';
-        };
-        testImg.src = thumbnailUrl;
+      // Load query data
+      const queryData = rowData[columns.description] || rowData[columns.query] || 'N/A';
+      currentQueryEl.textContent = queryData;
+      
+      // Load URL
+      const url = rowData[columns.link];
+      if (url) {
+        currentUrlEl.textContent = url;
+        currentUrlEl.href = url;
       } else {
-        thumbnailPreview.style.display = 'none';
-        thumbnailPlaceholder.style.display = 'flex';
-        thumbnailPlaceholder.textContent = 'No preview available';
+        currentUrlEl.textContent = 'No URL available';
+        currentUrlEl.href = '#';
       }
       
-      // Update score
-      const score = rowData[columns.result];
-      if (score === 0 || score === '0') {
-        currentScoreEl.textContent = '❌ Failed (0)';
-        currentScoreEl.style.color = '#d32f2f';
-      } else if (score === 1 || score === '1') {
+      // Load score data
+      const resultData = rowData[columns.result];
+      if (resultData === 1) {
         currentScoreEl.textContent = '✅ Passed (1)';
         currentScoreEl.style.color = '#388e3c';
+      } else if (resultData === 0) {
+        currentScoreEl.textContent = '❌ Failed (0)';
+        currentScoreEl.style.color = '#d32f2f';
       } else {
         currentScoreEl.textContent = 'Not scored';
         currentScoreEl.style.color = '#666';
       }
       
-      // Check for existing screenshot
+      // Load thumbnail
+      const thumbnailUrl = rowData[columns.thumbnail_link];
+      if (thumbnailUrl) {
+        thumbnailPreview.src = thumbnailUrl;
+        thumbnailPreview.classList.remove('hidden');
+        thumbnailPlaceholder.style.display = 'none';
+        thumbnailPreview.onerror = () => {
+          thumbnailPreview.classList.add('hidden');
+          thumbnailPlaceholder.style.display = 'block';
+        };
+      } else {
+        thumbnailPreview.classList.add('hidden');
+        thumbnailPlaceholder.style.display = 'block';
+      }
+      
+      // Load screenshot data
       const screenshotData = rowData[columns.screenshot];
       if (screenshotData) {
-        if (screenshotData.startsWith('data:')) {
-          // It's base64 data
-          screenshotPreview.src = screenshotData;
-          screenshotPreview.classList.remove('hidden');
-          noScreenshotDiv.style.display = 'none';
-          screenshotPreview.onclick = () => {
-            const newWindow = window.open();
-            newWindow.document.write(`<img src="${screenshotData}" style="max-width: 100%; max-height: 100vh; object-fit: contain;">`);
-          };
-        } else if (screenshotData.startsWith('screenshots/')) {
-          // It's a file path, read the file
-          ipcRenderer.invoke('read-screenshot', screenshotData).then(result => {
+        if (screenshotData.startsWith('screenshots/') || screenshotData.includes('/')) {
+          // File path - load from file
+          ipcRenderer.invoke('load-screenshot', screenshotData).then(result => {
             if (result.success) {
-              const imgSrc = `data:image/png;base64,${result.screenshot}`;
+              const imgSrc = `data:image/png;base64,${result.data}`;
               screenshotPreview.src = imgSrc;
               screenshotPreview.classList.remove('hidden');
               noScreenshotDiv.style.display = 'none';
@@ -625,8 +665,14 @@
       
       // Load URL in webview
       if (url) {
-        updateStatus(`Loading: ${url}`);
-        webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">🔄 Loading website...</div>';
+        // 检查是否已预加载
+        if (preloadedPages.has(currentIndex)) {
+          updateStatus(`Loading: ${url} (preloaded)`);
+          webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #4285f4;"><div style="margin-bottom: 10px;">⚡ Preloaded website loaded instantly</div><div style="font-size: 12px; color: #666;">You can see the actual website content in the embedded browser view</div></div>';
+        } else {
+          updateStatus(`Loading: ${url}`);
+          webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">🔄 Loading website...</div>';
+        }
         
         // Adjust BrowserView position first
         adjustBrowserViewPosition();
@@ -666,12 +712,16 @@
         webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">📝 No URL available for this entry</div>';
         updateStatus('No URL available');
       }
+      
+      // 触发下一批预加载
+      preloadNextPages();
     }
     
     // Event listeners
     prevBtn.addEventListener('click', () => loadPage(currentIndex - 1));
     nextBtn.addEventListener('click', () => loadPage(currentIndex + 1));
     
+    // 修改Pass按钮行为，支持自动跳转
     passBtn.addEventListener('click', () => {
       excelData[currentIndex][columns.result] = 1;
       currentScoreEl.textContent = '✅ Passed (1)';
@@ -679,6 +729,13 @@
       updateStatus('Marked as Passed');
       // Auto-save after scoring
       autoSave();
+      
+      // 自动跳转到下一页（如果开启了自动跳转）
+      if (autoNextEnabled && currentIndex < excelData.length - 1) {
+        setTimeout(() => {
+          loadPage(currentIndex + 1);
+        }, 300); // 300ms延迟让用户看到反馈
+      }
     });
     
     failBtn.addEventListener('click', () => {
@@ -766,8 +823,17 @@
       autoSave();
     });
     
-    // Keyboard shortcuts
+    // 修改键盘快捷键
     document.addEventListener('keydown', (e) => {
+      // 如果用户在输入框中，不响应快捷键（除了Ctrl+S）
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          saveBtn.click();
+        }
+        return;
+      }
+      
       switch(e.key) {
         case 'ArrowLeft':
           if (!prevBtn.disabled) loadPage(currentIndex - 1);
@@ -777,16 +843,55 @@
           if (!nextBtn.disabled) loadPage(currentIndex + 1);
           e.preventDefault();
           break;
-        case '1':
+        case 'ArrowUp':
+          // ↑ 代表 Pass
           passBtn.click();
           e.preventDefault();
           break;
-        case '0':
+        case 'ArrowDown':
+          // ↓ 代表 Fail
           failBtn.click();
           e.preventDefault();
           break;
+        case 's':
+          if (e.ctrlKey || e.metaKey) {
+            saveBtn.click();
+            e.preventDefault();
+          }
+          break;
       }
     });
+    
+    // 添加窗口调整事件监听
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        adjustBrowserViewPosition();
+      }, 250);
+    });
+    
+    // 添加滚动事件监听，滚动时隐藏BrowserView
+    let scrollTimeout;
+    window.addEventListener('scroll', () => {
+      ipcRenderer.invoke('hide-browser-view');
+      
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        adjustBrowserViewPosition();
+      }, 150);
+    });
+    
+    // BrowserView位置调整函数
+    function adjustBrowserViewPosition() {
+      const rect = webFrame.getBoundingClientRect();
+      ipcRenderer.invoke('adjust-browser-view', {
+        x: Math.round(rect.left),
+        y: Math.round(rect.top),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height)
+      });
+    }
     
     // Utility functions
     function updateStatus(message) {
@@ -833,4 +938,5 @@
     // loadExcelData(); // 注释掉自动加载，现在由文件选择触发
   </script>
 </body>
+</html> 
 </html> 

@@ -6,6 +6,7 @@ const fs = require('fs');
 let mainWindow;
 let webView;
 let selectedExcelFile = null; // 存储用户选择的Excel文件路径
+let preloadCache = new Map(); // 预加载缓存
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -23,9 +24,6 @@ function createWindow() {
   
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    
-    // 显示文件选择对话框
-    showFileSelectDialog();
   });
   
   // Create BrowserView for web content
@@ -69,6 +67,7 @@ function createWindow() {
   mainWindow.on('closed', function () {
     mainWindow = null;
     webView = null;
+    preloadCache.clear();
   });
 }
 
@@ -94,6 +93,62 @@ ipcMain.handle('load-url', async (event, url) => {
     return { success: false, error: 'No URL provided' };
   } catch (error) {
     console.error('Error loading URL:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Handle preloading URL (for performance optimization)
+ipcMain.handle('preload-url', async (event, url) => {
+  try {
+    if (!url) {
+      return { success: false, error: 'No URL provided' };
+    }
+    
+    // Check if already cached
+    if (preloadCache.has(url)) {
+      return { success: true, cached: true };
+    }
+    
+    // Create a hidden BrowserView for preloading
+    const preloadView = new BrowserView({
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        show: false
+      }
+    });
+    
+    try {
+      await preloadView.webContents.loadURL(url);
+      
+      // Cache the preloaded page
+      preloadCache.set(url, {
+        view: preloadView,
+        timestamp: Date.now()
+      });
+      
+      // Clean up old cache entries (keep only 20 most recent)
+      if (preloadCache.size > 20) {
+        const sortedEntries = Array.from(preloadCache.entries())
+          .sort((a, b) => a[1].timestamp - b[1].timestamp);
+        
+        // Remove oldest entries
+        for (let i = 0; i < 5; i++) {
+          const [oldUrl, oldEntry] = sortedEntries[i];
+          if (oldEntry.view) {
+            oldEntry.view.webContents.destroy();
+          }
+          preloadCache.delete(oldUrl);
+        }
+      }
+      
+      return { success: true, cached: false };
+    } catch (error) {
+      preloadView.webContents.destroy();
+      return { success: false, error: error.message };
+    }
+  } catch (error) {
+    console.error('Error preloading URL:', error);
     return { success: false, error: error.message };
   }
 });
@@ -147,10 +202,34 @@ ipcMain.handle('show-browser-view', async () => {
   }
 });
 
-// Handle selecting new Excel file
-ipcMain.handle('select-excel-file', async () => {
-  await showFileSelectDialog();
-  return { success: true };
+// Handle file selection
+ipcMain.handle('select-file', async () => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: 'Select Excel File',
+      defaultPath: __dirname,
+      filters: [
+        { name: 'Excel Files', extensions: ['xlsx', 'xls'] },
+        { name: 'All Files', extensions: ['*'] }
+      ],
+      properties: ['openFile']
+    });
+    
+    if (!result.canceled && result.filePaths.length > 0) {
+      selectedExcelFile = result.filePaths[0];
+      console.log('Selected Excel file:', selectedExcelFile);
+      return { 
+        success: true, 
+        filepath: selectedExcelFile,
+        filename: path.basename(selectedExcelFile)
+      };
+    } else {
+      return { success: false, error: 'File selection cancelled' };
+    }
+  } catch (error) {
+    console.error('Error showing file dialog:', error);
+    return { success: false, error: error.message };
+  }
 });
 
 // Handle Excel file loading
@@ -180,10 +259,11 @@ ipcMain.handle('load-excel', async () => {
       const headerStr = String(header).toLowerCase();
       if (headerStr.includes('description') || headerStr.includes('query')) {
         columns.description = index;
+        columns.query = index; // 添加query别名
       } else if (headerStr.includes('link') && !headerStr.includes('thumbnail')) {
         columns.link = index;
       } else if (headerStr.includes('image') || headerStr.includes('thumbnail')) {
-        columns.image = index;
+        columns.thumbnail_link = index;
       } else if (headerStr.includes('result')) {
         columns.result = index;
       } else if (headerStr.includes('issue')) {
@@ -195,8 +275,9 @@ ipcMain.handle('load-excel', async () => {
     
     // Set default indices if not found
     if (columns.description === undefined) columns.description = 0;
+    if (columns.query === undefined) columns.query = 0;
     if (columns.link === undefined) columns.link = 1;
-    if (columns.image === undefined) columns.image = 2;
+    if (columns.thumbnail_link === undefined) columns.thumbnail_link = 2;
     if (columns.result === undefined) columns.result = 3;
     if (columns.issue === undefined) columns.issue = 4;
     if (columns.screenshot === undefined) columns.screenshot = headers.length;
@@ -204,10 +285,15 @@ ipcMain.handle('load-excel', async () => {
     console.log('Columns detected:', columns);
     console.log('First few rows:', data.slice(0, 3));
     
-    return { data, columns, filename: path.basename(selectedExcelFile) };
+    return { 
+      success: true,
+      data, 
+      columns, 
+      filename: path.basename(selectedExcelFile) 
+    };
   } catch (error) {
     console.error('Error loading Excel file:', error);
-    throw error;
+    return { success: false, error: error.message };
   }
 });
 
@@ -228,7 +314,7 @@ ipcMain.handle('save-excel', async (event, data) => {
     return { success: true, filepath: selectedExcelFile };
   } catch (error) {
     console.error('Error saving Excel file:', error);
-    throw error;
+    return { success: false, error: error.message };
   }
 });
 
@@ -289,56 +375,18 @@ ipcMain.handle('take-screenshot', async () => {
   }
 });
 
-// Handle reading screenshot file
-ipcMain.handle('read-screenshot', async (event, filepath) => {
+// Handle loading screenshot file
+ipcMain.handle('load-screenshot', async (event, filepath) => {
   try {
     const fullPath = path.join(__dirname, filepath);
     if (fs.existsSync(fullPath)) {
       const buffer = fs.readFileSync(fullPath);
-      return { success: true, screenshot: buffer.toString('base64') };
+      return { success: true, data: buffer.toString('base64') };
     } else {
       return { success: false, error: 'File not found' };
     }
   } catch (error) {
-    console.error('Error reading screenshot:', error);
+    console.error('Error loading screenshot:', error);
     return { success: false, error: error.message };
   }
-});
-
-// 显示文件选择对话框
-async function showFileSelectDialog() {
-  try {
-    const result = await dialog.showOpenDialog(mainWindow, {
-      title: 'Select Excel File',
-      defaultPath: __dirname,
-      filters: [
-        { name: 'Excel Files', extensions: ['xlsx', 'xls'] },
-        { name: 'All Files', extensions: ['*'] }
-      ],
-      properties: ['openFile']
-    });
-    
-    if (!result.canceled && result.filePaths.length > 0) {
-      selectedExcelFile = result.filePaths[0];
-      console.log('Selected Excel file:', selectedExcelFile);
-      
-      // 通知前端文件已选择
-      if (mainWindow && mainWindow.webContents) {
-        mainWindow.webContents.send('excel-file-selected', {
-          filepath: selectedExcelFile,
-          filename: path.basename(selectedExcelFile)
-        });
-      }
-    } else {
-      // 用户取消选择，显示默认消息
-      if (mainWindow && mainWindow.webContents) {
-        mainWindow.webContents.send('excel-file-cancelled');
-      }
-    }
-  } catch (error) {
-    console.error('Error showing file dialog:', error);
-    if (mainWindow && mainWindow.webContents) {
-      mainWindow.webContents.send('excel-file-error', error.message);
-    }
-  }
-} 
+}); 

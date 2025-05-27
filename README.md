@@ -178,3 +178,181 @@ MIT License
 
 **版本**: 1.0.0  
 **最后更新**: 2024年5月26日 
+
+### 🆕 Latest Updates (v1.0.1)
+
+#### Enhanced Keyboard Shortcuts
+- **↑ (Up Arrow)**: Mark as Pass (saves as 1)
+- **↓ (Down Arrow)**: Mark as Fail (saves as 0)
+- **← →**: Navigate between pages
+- **Ctrl+S**: Manual save
+
+#### ⚡ Performance Optimization
+- **Smart Preloading**: Automatically preloads the next 10 web pages in the background
+- **Instant Loading**: Preloaded pages display immediately
+- **Memory Management**: Intelligent cache cleanup to prevent memory issues
+- **Real-time Status**: Shows preloading progress in the settings panel
+
+#### 🎯 Auto-Advance Feature
+- **Smart Navigation**: Automatically advance to the next page after marking as "Pass"
+- **Toggle Control**: Easy on/off switch in the settings panel
+- **User Choice**: Only affects "Pass" actions - "Fail" always stays on current page
+- **Visual Feedback**: Clear indication of auto-advance status
+
+### Interface Improvements
+- **Modern UI**: Clean and intuitive interface design
+- **Settings Panel**: Centralized control for new features
+- **Status Indicators**: Real-time feedback for all operations
+- **Responsive Layout**: Optimized for different screen sizes
+
+## 📋 Requirements
+
+- **Node.js** (version 16 or higher)
+- **macOS, Windows, or Linux**
+- **Excel files** with web page data
+
+## 🛠️ Installation
+
+### Option 1: Download Pre-built Packages
+Download the latest release from the [Releases page](https://github.com/XiaoDcs/query-benchmark/releases):
+
+**For macOS:**
+- `Web-Page-Scorer-mac-intel.dmg` (Intel Macs)
+- `Web-Page-Scorer-mac-arm64.dmg` (Apple Silicon M1/M2 Macs)
+- `Web-Page-Scorer-mac-intel.zip` (Portable)
+- `Web-Page-Scorer-mac-arm64.zip` (Portable)
+
+**For Windows:**
+- `Web-Page-Scorer-windows-installer.exe` (Installer)
+- `Web-Page-Scorer-windows-portable.exe` (Portable)
+
+### Option 2: Build from Source
+```bash
+# Clone the repository
+git clone https://github.com/XiaoDcs/query-benchmark.git
+cd query-benchmark
+
+# Install dependencies
+npm install
+
+# Run the application
+npm start
+
+# Build packages (optional)
+npm run build:all
+```
+
+## 🎯 Usage
+
+### Getting Started
+1. **Launch** the Web Page Scorer application
+2. **Select Excel File**: Click "📁 Select Excel File" to choose your data file
+3. **Start Scoring**: Use the interface to evaluate web pages
+
+### Excel File Format
+Your Excel file should contain columns for:
+- **Description/Query**: Page description or search query
+- **Link**: Website URL to evaluate
+- **Thumbnail**: Preview image URL (optional)
+- **Result**: Scoring results (1 for Pass, 0 for Fail)
+- **Issue**: Notes and observations
+- **Screenshot**: Captured screenshot paths
+
+### Scoring Workflow
+1. **Review** the web page in the embedded browser
+2. **Score** using keyboard shortcuts or buttons:
+   - **↑ (Up)** or **Pass Button**: Mark as Pass
+   - **↓ (Down)** or **Fail Button**: Mark as Fail
+3. **Add Notes** in the issue field if needed
+4. **Take Screenshot** for documentation
+5. **Navigate** to the next page (automatic if enabled)
+
+### Settings Configuration
+- **Auto-advance on Pass**: Toggle automatic navigation after Pass scoring
+- **Preloading Status**: Monitor background page loading
+- **Keyboard Shortcuts**: View available hotkeys
+
+## 🔧 Advanced Features
+
+### Performance Optimization
+- **Smart Caching**: Preloads next 10 pages automatically
+- **Memory Management**: Automatic cleanup of old cached pages
+- **Background Loading**: Non-blocking preload operations
+
+### Data Management
+- **Auto-Save**: Saves progress after each action
+- **Manual Save**: Ctrl+S for immediate save
+- **Excel Compatibility**: Maintains original file format
+
+### Navigation
+- **Progress Tracking**: Visual progress bar and page counter
+- **Quick Navigation**: Keyboard shortcuts for efficient workflow
+- **External Browser**: Open pages in system browser when needed
+
+## 🛠️ Development
+
+### Build Scripts
+```bash
+# Development
+npm start                 # Run in development mode
+npm run build:mac        # Build for macOS
+npm run build:win        # Build for Windows
+npm run build:all        # Build for all platforms
+
+# Release Management
+./prepare-release.sh      # Prepare release packages
+```
+
+### Project Structure
+```
+query-benchmark/
+├── main.js              # Main Electron process
+├── index.html           # Frontend interface
+├── package.json         # Dependencies and scripts
+├── screenshots/         # Screenshot storage
+├── dist/               # Built packages
+└── release/            # Release packages
+```
+
+## 📸 Screenshots
+
+The application automatically saves screenshots to the `screenshots/` directory and maintains references in the Excel file for easy access.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🔄 Version History
+
+### v1.0.1 (Current)
+- Enhanced keyboard shortcuts (↑/↓ for Pass/Fail)
+- Smart preloading system
+- Auto-advance toggle feature
+- Performance optimizations
+- UI improvements
+
+### v1.0.0
+- Initial release
+- Basic scoring functionality
+- Excel file support
+- Screenshot capture
+- Auto-save feature
+
+## 🐛 Support
+
+If you encounter any issues or have suggestions:
+1. Check the [Issues page](https://github.com/XiaoDcs/query-benchmark/issues)
+2. Create a new issue with detailed information
+3. Include your system details and error messages
+
+## 🎉 Acknowledgments
+
+Built with Electron, Node.js, and modern web technologies for cross-platform compatibility and optimal performance. 
