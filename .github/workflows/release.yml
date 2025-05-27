@@ -51,7 +51,6 @@ jobs:
       with:
         name: macos-builds
         path: |
-          dist/*.dmg
           dist/*.zip
           
     - name: Upload Windows artifacts
@@ -87,6 +86,5 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          *.dmg
           *.zip
           *.exe 

@@ -46,6 +46,10 @@
       "category": "public.app-category.productivity",
       "target": [
         {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
           "target": "zip",
           "arch": ["x64", "arm64"]
         }
@@ -68,6 +72,9 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
+    },
+    "dmg": {
+      "title": "Web Page Scorer ${version}"
     }
   }
 }
