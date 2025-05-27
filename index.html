@@ -621,7 +621,7 @@
             <button id="cancel-edit-btn">Cancel</button>
           </div>
           
-          <textarea id="issue-input" rows="3" style="width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 8px; resize: vertical; margin-top: 8px;" placeholder="Enter any issues or notes..."></textarea>
+          <textarea id="issue-input" rows="3" style="width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 8px; resize: vertical; margin-top: 8px; font-size: 13px; box-sizing: border-box;" placeholder="Enter issue or note..."></textarea>
           
           <div style="margin-top: 10px;">
             <img id="screenshot-preview" class="screenshot-preview hidden" alt="Screenshot" />
@@ -1509,7 +1509,10 @@
           const issueText = e.target.value.trim();
           if (issueText && excelData[currentIndex][columns.result] !== 0) {
             // 有issue内容且当前不是fail状态，自动设为fail
-            setScore(0);
+            excelData[currentIndex][columns.result] = 0;
+            currentScoreEl.textContent = '❌ Failed (0)';
+            currentScoreEl.style.color = '#d32f2f';
+            updateContainerStatus(0);
             updateStatus('Auto-failed due to issue content');
           }
         }
@@ -1639,7 +1642,10 @@
         // 检查自动fail功能
         if (autoFailEnabled && issueInput.value.trim() && excelData[currentIndex][columns.result] !== 0) {
           // 有issue内容且当前不是fail状态，自动设为fail
-          setScore(0);
+          excelData[currentIndex][columns.result] = 0;
+          currentScoreEl.textContent = '❌ Failed (0)';
+          currentScoreEl.style.color = '#d32f2f';
+          updateContainerStatus(0);
           updateStatus('Auto-failed due to issue tag');
         }
         
