@@ -146,11 +146,17 @@ We'd love to hear about your experience with v1.0.1:
 - Any issues encountered
 
 Please share feedback via:
-- [GitHub Issues](https://github.com/XiaoDcs/query-benchmark/issues)
-- [Discussions](https://github.com/XiaoDcs/query-benchmark/discussions)
+- [GitHub Issues](https://github.com/XiaoDcs/web-page-scorer/issues)
+- [Discussions](https://github.com/XiaoDcs/web-page-scorer/discussions)
 
----
+## 🆘 技术支持
 
-**Download v1.0.1**: [Release Page](https://github.com/XiaoDcs/query-benchmark/releases/tag/v1.0.1)
+如遇问题或有建议，请通过以下方式联系：
+- [GitHub Issues](https://github.com/XiaoDcs/web-page-scorer/issues)
+- [Discussions](https://github.com/XiaoDcs/web-page-scorer/discussions)
+
+## 📥 下载链接
+
+**Download v1.0.1**: [Release Page](https://github.com/XiaoDcs/web-page-scorer/releases/tag/v1.0.1)
 
 **Previous Version**: [v1.0.0 Release Notes](./RELEASE_NOTES.md) 

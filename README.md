@@ -52,8 +52,8 @@
 
 1. **克隆项目**
 ```bash
-git clone <repository-url>
-cd query-benchmark
+git clone https://github.com/XiaoDcs/web-page-scorer.git
+cd web-page-scorer
 ```
 
 2. **安装依赖**
@@ -85,7 +85,7 @@ script/build.bat           # Windows
 ## 📂 项目结构
 
 ```
-query-benchmark/
+web-page-scorer/
 ├── main.js                    # Electron 主进程
 ├── index.html                 # 应用界面
 ├── package.json               # 项目配置

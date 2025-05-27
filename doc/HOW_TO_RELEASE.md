@@ -29,9 +29,11 @@
 
 ### 方法1：手动创建Release（推荐）
 
-1. **访问GitHub Release页面**：
+1. **访问GitHub Release页面**
+   
+   打开浏览器访问:
    ```
-   https://github.com/XiaoDcs/query-benchmark/releases/new
+   https://github.com/XiaoDcs/web-page-scorer/releases/new
    ```
 
 2. **填写Release信息**：
@@ -78,10 +80,10 @@
 
 ## 🔗 相关链接
 
-- **GitHub仓库**: https://github.com/XiaoDcs/query-benchmark
-- **创建Release**: https://github.com/XiaoDcs/query-benchmark/releases/new
-- **Actions状态**: https://github.com/XiaoDcs/query-benchmark/actions
-- **标签列表**: https://github.com/XiaoDcs/query-benchmark/tags
+- **GitHub仓库**: https://github.com/XiaoDcs/web-page-scorer
+- **创建Release**: https://github.com/XiaoDcs/web-page-scorer/releases/new
+- **Actions状态**: https://github.com/XiaoDcs/web-page-scorer/actions
+- **标签列表**: https://github.com/XiaoDcs/web-page-scorer/tags
 
 ## 🛠️ 如果需要更新Release
 
