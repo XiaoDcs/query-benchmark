@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Query Viewer</title>
+    <!-- Use the latest full bundle from Markmap instead of individual components -->
+    <script src="https://cdn.jsdelivr.net/npm/markmap-autoloader@latest"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 1200px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .query-item { border: 1px solid #ddd; margin-bottom: 20px; border-radius: 5px; overflow: hidden; }
+        .query-header { background-color: #e9e9e9; padding: 10px 15px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .query-header:hover { background-color: #dcdcdc; }
+        .query-title { flex-grow: 1; }
+        .query-rating { display: flex; align-items: center; gap: 5px; }
+        .query-content { padding: 15px; border-top: 1px solid #ddd; display: none; }
+        .rating-badge { padding: 3px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; }
+        .rating-good { background-color: #d4edda; color: #155724; }
+        .rating-medium { background-color: #fff3cd; color: #856404; }
+        .rating-poor { background-color: #f8d7da; color: #721c24; }
+        .rating-controls { margin-top: 10px; padding: 10px; background-color: #f9f9f9; border-radius: 4px; border: 1px solid #eee; }
+        .rating-buttons { display: flex; gap: 10px; margin-bottom: 10px; }
+        .rating-btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .rating-btn-good { background-color: #d4edda; color: #155724; }
+        .rating-btn-medium { background-color: #fff3cd; color: #856404; }
+        .rating-btn-poor { background-color: #f8d7da; color: #721c24; }
+        .rating-btn.selected { outline: 2px solid #007bff; }
+        .rating-comment { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 10px; }
+        .save-rating-btn { padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .save-rating-btn:hover { background-color: #0056b3; }
+        h2 { color: #333; margin-top: 0; }
+        h3 { color: #555; margin-top: 20px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+        ul { list-style-type: disc; padding-left: 20px; }
+        li { margin-bottom: 5px; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        img { max-width: 100px; max-height: 100px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        .image-gallery { display: flex; flex-wrap: wrap; gap: 10px; }
+        .content-section { white-space: pre-wrap; background-color: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee; }
+        .markmap-container svg { width: 100%; height: 500px; border: 1px solid #eee; border-radius: 4px; display: block; }
+        .markmap-container { margin-top: 10px; margin-bottom: 20px; }
+        
+        .filter-controls { background-color: #f9f9f9; padding: 15px; margin-bottom: 20px; border-radius: 5px; border: 1px solid #eee; display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; }
+        .filter-controls div { display: flex; flex-direction: column; }
+        .filter-controls label { margin-bottom: 5px; font-size: 0.9em; color: #555; }
+        .filter-controls input[type="text"], .filter-controls select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
+        .filter-controls button { padding: 8px 16px; cursor: pointer; background-color: #28a745; color: white; border: none; border-radius: 4px; margin-top: auto; }
+        .filter-controls button.clear { background-color: #dc3545; }
+        
+        .global-controls { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 20px; 
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .global-controls button { 
+            padding: 8px 16px; 
+            cursor: pointer; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .global-controls button:hover { 
+            background-color: #0056b3; 
+        }
+        .items-per-page-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .items-per-page-control select {
+            padding: 7px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        
+        .pagination-controls { margin-top: 20px; margin-bottom: 20px; text-align: center; }
+        .pagination-controls button { padding: 8px 16px; margin: 0 5px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
+        .pagination-controls button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .pagination-controls span { margin: 0 10px; }
+        
+        /* 样式用于文本树视图 */
+        .mindmap-text-view { 
+            white-space: pre-wrap; 
+            font-family: monospace; 
+            background-color: #f9f9f9; 
+            padding: 15px; 
+            border-radius: 4px; 
+            border: 1px solid #eee; 
+            max-height: 400px; 
+            overflow-y: auto; 
+            margin-bottom: 20px; 
+            line-height: 1.5;
+        }
+        
+        /* 标签页样式 */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+        .tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab.active {
+            background-color: #f9f9f9;
+            border-color: #ddd;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 添加加载器样式 */
+        .mindmap-loader {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 4px;
+            text-align: center;
+            margin: 10px 0;
+            border: 1px dashed #ddd;
+        }
+        .mindmap-loader button {
+            padding: 8px 16px;
+            cursor: pointer;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .mindmap-loader button:hover {
+            background-color: #218838;
+        }
+
+        @media (max-width: 768px) {
+            .global-controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .items-per-page-control {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Queries and Responses</h1>
+        
+        <div id="filterControlsContainer" class="filter-controls">
+        </div>
+
+        <div class="global-controls">
+            <button id="saveDataBtn">Save All Ratings</button>
+            <button id="expandAllBtn">Expand All</button>
+            <button id="collapseAllBtn">Collapse All</button>
+            <div class="items-per-page-control">
+                <label for="itemsPerPageSelect">Items per page:</label>
+                <select id="itemsPerPageSelect">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="queriesContainer">
+        </div>
+        <div id="paginationControls" class="pagination-controls">
+        </div>
+    </div>
+
+    <script>
+        let allDataEntries = [];
+        let filteredDataEntries = [];
+        let currentPage = 1;
+        let itemsPerPage = 10; 
+        let totalPages = 1;
+        let markmapCounter = 0;
+        let dataModified = false; // Track if data has been modified
+        
+        // 全局评分状态
+        let currentRatingMap = {};
+
+        const queriesContainer = document.getElementById('queriesContainer');
+        const paginationControlsContainer = document.getElementById('paginationControls');
+        const filterControlsContainer = document.getElementById('filterControlsContainer');
+        const expandAllBtn = document.getElementById('expandAllBtn');
+        const collapseAllBtn = document.getElementById('collapseAllBtn');
+        const itemsPerPageSelect = document.getElementById('itemsPerPageSelect');
+        const saveDataBtn = document.getElementById('saveDataBtn');
+
+        // 初始化时添加Save按钮的事件处理
+        if (saveDataBtn) {
+            saveDataBtn.addEventListener('click', saveData);
+        }
+
+        // Function to get URL parameters
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                searchQuery: params.get('q') || '',
+                searchContent: params.get('content') || '',
+                completed: params.get('completed') || 'any',
+                hasError: params.get('error') || 'any',
+                page: parseInt(params.get('page')) || 1,
+                itemsPerPage: parseInt(params.get('perPage')) || 10
+            };
+        }
+
+        // Function to update URL with current filters and page
+        function updateUrl() {
+            const searchQueryText = document.getElementById('searchQueryText').value;
+            const searchContentText = document.getElementById('searchContentText').value;
+            const filterCompleted = document.getElementById('filterCompleted').value;
+            const filterHasError = document.getElementById('filterHasError').value;
+            
+            const url = new URL(window.location);
+            
+            // Update or remove parameters based on values
+            if (searchQueryText) url.searchParams.set('q', searchQueryText);
+            else url.searchParams.delete('q');
+            
+            if (searchContentText) url.searchParams.set('content', searchContentText);
+            else url.searchParams.delete('content');
+            
+            if (filterCompleted !== 'any') url.searchParams.set('completed', filterCompleted);
+            else url.searchParams.delete('completed');
+            
+            if (filterHasError !== 'any') url.searchParams.set('error', filterHasError);
+            else url.searchParams.delete('error');
+            
+            if (currentPage > 1) url.searchParams.set('page', currentPage);
+            else url.searchParams.delete('page');
+            
+            if (itemsPerPage !== 10) url.searchParams.set('perPage', itemsPerPage);
+            else url.searchParams.delete('perPage');
+            
+            // Update URL without reloading
+            window.history.pushState({}, '', url);
+        }
+
+        // Function to save data back to server
+        async function saveData() {
+            console.log('saveData函数被调用');
+            
+            if (!dataModified) {
+                console.log('没有数据被修改，不需要保存');
+                alert('没有修改需要保存');
+                return;
+            }
+            
+            try {
+                // Convert the data back to the expected format
+                const dataToSave = {};
+                allDataEntries.forEach(([id, item]) => {
+                    dataToSave[id] = item;
+                });
+                
+                console.log('Saving data object:', dataToSave);
+                console.log('Number of entries being saved:', Object.keys(dataToSave).length);
+                
+                if (Object.keys(dataToSave).length === 0) {
+                    console.error('没有数据需要保存 - 数据对象为空');
+                    alert('没有数据需要保存');
+                    return;
+                }
+                
+                // 打印要保存的具体数据结构示例
+                if (Object.keys(dataToSave).length > 0) {
+                    const sampleKey = Object.keys(dataToSave)[0];
+                    console.log('Sample entry structure:', JSON.stringify(dataToSave[sampleKey], null, 2));
+                }
+                
+                // 使用绝对URL，确保正确的端口
+                const serverUrl = window.location.origin; // 获取当前页面的域名和端口
+                const saveUrl = `${serverUrl}/save-data`;
+                console.log('Using server URL:', serverUrl);
+                console.log('Save endpoint:', saveUrl);
+                
+                // 打印请求详情
+                console.log('发送保存请求...');
+                const startTime = new Date().getTime();
+                
+                const response = await fetch(saveUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dataToSave)
+                });
+                
+                const endTime = new Date().getTime();
+                console.log(`请求花费了 ${endTime - startTime}ms`);
+                
+                // 记录响应状态
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                const result = await response.json();
+                console.log('Response body:', result);
+                
+                if (!response.ok) {
+                    throw new Error(`服务器错误 (${response.status}): ${result.message || '未知错误'}`);
+                }
+                
+                console.log('保存成功:', result);
+                
+                dataModified = false;
+                alert('数据保存成功！');
+            } catch (error) {
+                console.error('保存数据时出错:', error);
+                // 显示更友好的错误消息
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    alert(`无法连接到服务器。请检查服务器是否运行在正确的端口上，并确保没有网络问题。`);
+                } else {
+                    alert(`保存数据失败: ${error.message}. 请查看控制台获取更多信息.`);
+                }
+            }
+        }
+        
+        // Function to handle rating a query
+        async function rateQuery(id, rating, comment) {
+            console.log(`Rating query ${id} as ${rating} with comment: ${comment}`);
+            
+            try {
+                // Find the entry in allDataEntries
+                const entryIndex = allDataEntries.findIndex(entry => entry[0] === id);
+                if (entryIndex === -1) {
+                    console.error(`Could not find entry with ID ${id}`);
+                    alert(`错误：找不到ID为 ${id} 的条目`);
+                    return;
+                }
+                
+                // 确保实体存在
+                let entry = allDataEntries[entryIndex][1];
+                
+                // 打印当前状态
+                console.log('Before update:', JSON.stringify(entry, null, 2));
+                
+                // 创建一个安全的拷贝来避免引用问题
+                if (typeof entry === 'object' && entry !== null) {
+                    // Update the rating and comment
+                    entry.rating = rating;
+                    entry.comment = comment;
+                } else {
+                    console.error('Entry is not an object:', entry);
+                    alert('数据格式错误，无法保存评分');
+                    return;
+                }
+                
+                // 确保保留了原始属性
+                console.log('After update:', JSON.stringify(entry, null, 2));
+                
+                // Update the entry in filteredDataEntries if present
+                const filteredIndex = filteredDataEntries.findIndex(entry => entry[0] === id);
+                if (filteredIndex !== -1) {
+                    filteredDataEntries[filteredIndex][1].rating = rating;
+                    filteredDataEntries[filteredIndex][1].comment = comment;
+                }
+                
+                dataModified = true;
+                console.log('数据已标记为已修改');
+                
+                // Update the UI - 确保评分UI更新
+                const queryItem = document.getElementById(`query-item-${id}`);
+                if (queryItem) {
+                    const ratingBadge = queryItem.querySelector('.rating-badge');
+                    if (ratingBadge) {
+                        // 移除旧的评分样式
+                        ratingBadge.classList.remove('rating-good', 'rating-medium', 'rating-poor');
+                        // 添加新的评分样式
+                        ratingBadge.classList.add(`rating-${rating.toLowerCase()}`);
+                        ratingBadge.textContent = rating.toUpperCase();
+                    } else {
+                        // 如果没有评分徽章，需要在查询标题中添加一个
+                        const queryRating = queryItem.querySelector('.query-rating');
+                        if (queryRating) {
+                            queryRating.innerHTML = '';
+                            const newBadge = document.createElement('span');
+                            newBadge.className = `rating-badge rating-${rating.toLowerCase()}`;
+                            newBadge.textContent = rating.toUpperCase();
+                            queryRating.appendChild(newBadge);
+                        }
+                    }
+                }
+                
+                // 直接保存单个评分，不依赖saveData函数
+                console.log('正在直接保存评分数据到服务器...');
+                
+                // 准备要保存的数据
+                const dataToSave = {};
+                allDataEntries.forEach(([entryId, entryItem]) => {
+                    dataToSave[entryId] = entryItem;
+                });
+                
+                console.log('将要保存的数据:', dataToSave);
+                
+                // 使用绝对URL，确保正确的端口
+                const serverUrl = window.location.origin; // 获取当前页面的域名和端口
+                const saveUrl = `${serverUrl}/save-data`;
+                console.log('使用服务器URL:', serverUrl);
+                console.log('保存端点:', saveUrl);
+                
+                // 发送请求
+                try {
+                    const startTime = new Date().getTime();
+                    console.log('发送fetch请求...');
+                    
+                    const response = await fetch(saveUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'Cache-Control': 'no-cache'
+                        },
+                        mode: 'same-origin', // 确保同源请求
+                        cache: 'no-cache',   // 不使用缓存
+                        credentials: 'same-origin', // 包含凭据
+                        body: JSON.stringify(dataToSave)
+                    });
+                    
+                    const endTime = new Date().getTime();
+                    console.log(`请求花费了 ${endTime - startTime}ms`);
+                    console.log('响应状态:', response.status);
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('保存成功:', result);
+                        alert('评分保存成功！');
+                    } else {
+                        const errorText = await response.text();
+                        console.error('服务器返回错误:', response.status, errorText);
+                        throw new Error(`服务器返回错误 (${response.status}): ${errorText}`);
+                    }
+                } catch (fetchError) {
+                    console.error('发送请求时出错:', fetchError);
+                    throw new Error(`无法保存评分: ${fetchError.message}`);
+                }
+            } catch (error) {
+                console.error('评分过程中出错:', error);
+                alert(`评分失败: ${error.message}`);
+            }
+        }
+
+        // Function to expand all items on the current page
+        function expandAll() {
+            const queryHeaders = document.querySelectorAll('.query-header');
+            let hasNewlyExpanded = false;
+            
+            queryHeaders.forEach(header => {
+                const content = header.nextElementSibling;
+                if (content.style.display !== 'block') {
+                    // Mark that we've expanded something new
+                    hasNewlyExpanded = true;
+                    
+                    // Simulate a click to handle any initialization that might be needed
+                    header.click();
+                }
+            });
+            
+            // If we expanded new items, render markmaps again after a delay
+            if (hasNewlyExpanded && window.markmap && window.markmap.autoLoader) {
+                setTimeout(() => {
+                    window.markmap.autoLoader.renderAll();
+                }, 300); // Longer delay to ensure all DOM elements are fully rendered
+            }
+        }
+
+        // Function to collapse all items on the current page
+        function collapseAll() {
+            const queryHeaders = document.querySelectorAll('.query-header');
+            queryHeaders.forEach(header => {
+                const content = header.nextElementSibling;
+                if (content.style.display === 'block') {
+                    content.style.display = 'none';
+                }
+            });
+        }
+
+        async function loadQueries() {
+            try {
+                const response = await fetch('query_set_iter_1.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                allDataEntries = Object.entries(data);
+                
+                // 打印数据以检查格式
+                console.log('Loaded data:', data);
+                console.log('First entry:', allDataEntries[0]);
+                
+                filteredDataEntries = [...allDataEntries]; 
+                
+                setupFilterControls();
+                
+                // Apply URL parameters if present
+                const urlParams = getUrlParams();
+                if (document.getElementById('searchQueryText')) {
+                    document.getElementById('searchQueryText').value = urlParams.searchQuery;
+                }
+                if (document.getElementById('searchContentText')) {
+                    document.getElementById('searchContentText').value = urlParams.searchContent;
+                }
+                if (document.getElementById('filterCompleted')) {
+                    document.getElementById('filterCompleted').value = urlParams.completed;
+                }
+                if (document.getElementById('filterHasError')) {
+                    document.getElementById('filterHasError').value = urlParams.hasError;
+                }
+                
+                // Set items per page from URL or localStorage
+                itemsPerPage = urlParams.itemsPerPage || parseInt(localStorage.getItem('itemsPerPage') || '10');
+                if (itemsPerPageSelect) {
+                    itemsPerPageSelect.value = itemsPerPage.toString();
+                }
+                
+                // Set current page from URL if present
+                currentPage = urlParams.page;
+                
+                // Setup event listeners for expand/collapse and items per page
+                setupEventListeners();
+                
+                applyFiltersAndSearch(); 
+
+            } catch (error) {
+                console.error('Failed to load queries:', error);
+                queriesContainer.innerHTML = '<p>Error loading data. Check the console for details.</p>';
+                filterControlsContainer.innerHTML = '<p>Could not load filters due to data error.</p>';
+            }
+        }
+        
+        function setupFilterControls() {
+            filterControlsContainer.innerHTML = ''; 
+            const searchQueryDiv = document.createElement('div');
+            const searchQueryLabel = document.createElement('label');
+            searchQueryLabel.htmlFor = 'searchQueryText';
+            searchQueryLabel.textContent = 'Search Query Text:';
+            const searchQueryInput = document.createElement('input');
+            searchQueryInput.type = 'text';
+            searchQueryInput.id = 'searchQueryText';
+            searchQueryInput.placeholder = 'Enter query text...';
+            searchQueryDiv.appendChild(searchQueryLabel);
+            searchQueryDiv.appendChild(searchQueryInput);
+            filterControlsContainer.appendChild(searchQueryDiv);
+
+            const searchContentDiv = document.createElement('div');
+            const searchContentLabel = document.createElement('label');
+            searchContentLabel.htmlFor = 'searchContentText';
+            searchContentLabel.textContent = 'Search Response Content:';
+            const searchContentInput = document.createElement('input');
+            searchContentInput.type = 'text';
+            searchContentInput.id = 'searchContentText';
+            searchContentInput.placeholder = 'Enter content text...';
+            searchContentDiv.appendChild(searchContentLabel);
+            searchContentDiv.appendChild(searchContentInput);
+            filterControlsContainer.appendChild(searchContentDiv);
+
+            const completedDiv = document.createElement('div');
+            const completedLabel = document.createElement('label');
+            completedLabel.htmlFor = 'filterCompleted';
+            completedLabel.textContent = 'Completed Status:';
+            const completedSelect = document.createElement('select');
+            completedSelect.id = 'filterCompleted';
+            ['Any', 'True', 'False'].forEach(val => {
+                const option = document.createElement('option');
+                option.value = val.toLowerCase();
+                option.textContent = val;
+                completedSelect.appendChild(option);
+            });
+            completedDiv.appendChild(completedLabel);
+            completedDiv.appendChild(completedSelect);
+            filterControlsContainer.appendChild(completedDiv);
+
+            const hasErrorDiv = document.createElement('div');
+            const hasErrorLabel = document.createElement('label');
+            hasErrorLabel.htmlFor = 'filterHasError';
+            hasErrorLabel.textContent = 'Has Error:';
+            const hasErrorSelect = document.createElement('select');
+            hasErrorSelect.id = 'filterHasError';
+            ['Any', 'Yes', 'No'].forEach(val => {
+                const option = document.createElement('option');
+                option.value = val.toLowerCase();
+                option.textContent = val;
+                hasErrorSelect.appendChild(option);
+            });
+            hasErrorDiv.appendChild(hasErrorLabel);
+            hasErrorDiv.appendChild(hasErrorSelect);
+            filterControlsContainer.appendChild(hasErrorDiv);
+            
+            // Add rating filter
+            const ratingDiv = document.createElement('div');
+            const ratingLabel = document.createElement('label');
+            ratingLabel.htmlFor = 'filterRating';
+            ratingLabel.textContent = 'Rating:';
+            const ratingSelect = document.createElement('select');
+            ratingSelect.id = 'filterRating';
+            ['Any', 'Good', 'Medium', 'Poor', 'Unrated'].forEach(val => {
+                const option = document.createElement('option');
+                option.value = val.toLowerCase();
+                option.textContent = val;
+                ratingSelect.appendChild(option);
+            });
+            ratingDiv.appendChild(ratingLabel);
+            ratingDiv.appendChild(ratingSelect);
+            filterControlsContainer.appendChild(ratingDiv);
+
+            const applyButton = document.createElement('button');
+            applyButton.textContent = 'Apply Filters';
+            applyButton.onclick = applyFiltersAndSearch;
+            filterControlsContainer.appendChild(applyButton);
+
+            const clearButton = document.createElement('button');
+            clearButton.textContent = 'Clear Filters';
+            clearButton.className = 'clear';
+            clearButton.onclick = () => {
+                document.getElementById('searchQueryText').value = '';
+                document.getElementById('searchContentText').value = '';
+                document.getElementById('filterCompleted').value = 'any';
+                document.getElementById('filterHasError').value = 'any';
+                document.getElementById('filterRating').value = 'any';
+                applyFiltersAndSearch(); 
+            };
+            filterControlsContainer.appendChild(clearButton);
+            
+            // Add listener for the Enter key on input fields
+            document.getElementById('searchQueryText').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    applyFiltersAndSearch();
+                }
+            });
+            
+            document.getElementById('searchContentText').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    applyFiltersAndSearch();
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            // Event listener for items per page select
+            if (itemsPerPageSelect) {
+                itemsPerPageSelect.addEventListener('change', function() {
+                    itemsPerPage = parseInt(this.value);
+                    localStorage.setItem('itemsPerPage', itemsPerPage);
+                    currentPage = 1; // Reset to first page when changing items per page
+                    totalPages = Math.ceil(filteredDataEntries.length / itemsPerPage);
+                    renderCurrentPage();
+                    setupPaginationControls();
+                    updateUrl();
+                });
+            }
+            
+            // Event listeners for expand/collapse all buttons
+            if (expandAllBtn) {
+                expandAllBtn.addEventListener('click', expandAll);
+            }
+            
+            if (collapseAllBtn) {
+                collapseAllBtn.addEventListener('click', collapseAll);
+            }
+        }
+
+        function applyFiltersAndSearch() {
+            const searchQueryText = document.getElementById('searchQueryText').value.toLowerCase();
+            const searchContentText = document.getElementById('searchContentText').value.toLowerCase();
+            const filterCompleted = document.getElementById('filterCompleted').value;
+            const filterHasError = document.getElementById('filterHasError').value;
+            const filterRating = document.getElementById('filterRating').value;
+
+            filteredDataEntries = allDataEntries.filter(([id, item]) => {
+                let responseData;
+                try {
+                    responseData = JSON.parse(item.response);
+                } catch (e) {
+                    return false; 
+                }
+                if (searchQueryText && !item.query.toLowerCase().includes(searchQueryText)) {
+                    return false;
+                }
+                if (searchContentText && (!responseData.Content || !responseData.Content.toLowerCase().includes(searchContentText))) {
+                    return false;
+                }
+                if (filterCompleted !== 'any') {
+                    const isCompleted = responseData.Completed === true || String(responseData.Completed).toLowerCase() === 'true';
+                    if (filterCompleted === 'true' && !isCompleted) return false;
+                    if (filterCompleted === 'false' && isCompleted) return false;
+                }
+                if (filterHasError !== 'any') {
+                    const hasError = responseData.ErrorMessage !== null && responseData.ErrorMessage !== undefined && responseData.ErrorMessage !== '';
+                    if (filterHasError === 'yes' && !hasError) return false;
+                    if (filterHasError === 'no' && hasError) return false;
+                }
+                if (filterRating !== 'any') {
+                    if (filterRating === 'unrated' && item.rating) return false;
+                    if (filterRating !== 'unrated' && (!item.rating || item.rating !== filterRating)) return false;
+                }
+                return true;
+            });
+
+            // Don't reset page if coming from URL parameters
+            const urlParams = getUrlParams();
+            const isInitialLoad = currentPage === urlParams.page;
+            
+            if (!isInitialLoad) {
+                currentPage = 1;
+            }
+            
+            totalPages = Math.ceil(filteredDataEntries.length / itemsPerPage);
+            
+            // Make sure current page is valid
+            if (currentPage > totalPages && totalPages > 0) {
+                currentPage = totalPages;
+            }
+            
+            renderCurrentPage();
+            setupPaginationControls();
+            updateUrl();
+        }
+        
+        // Convert our MindMap JSON to Markdown for Markmap
+        function jsonToMarkdown(node, level = 1) {
+            if (!node || typeof node !== 'object') return '';
+            
+            // Create the heading with appropriate number of # for the level
+            const name = node.Name || 'Unnamed';
+            const heading = '#'.repeat(level) + ' ' + name + '\n';
+            
+            // Process children recursively
+            let childrenMd = '';
+            if (node.Children && Array.isArray(node.Children)) {
+                node.Children.forEach(child => {
+                    childrenMd += jsonToMarkdown(child, level + 1);
+                });
+            }
+            
+            return heading + childrenMd;
+        }
+
+        // Convert MindMap JSON to text tree
+        function jsonToTreeText(node, prefix = '', isLast = true, level = 0) {
+            if (!node || typeof node !== 'object') return '';
+            
+            const name = node.Name || 'Unnamed';
+            
+            // Create branch prefix (│, ├, └, ─)
+            const connector = level === 0 ? '' : (isLast ? '└── ' : '├── ');
+            const indentation = level === 0 ? '' : prefix;
+            
+            let result = indentation + connector + name + '\n';
+            
+            if (node.Children && Array.isArray(node.Children) && node.Children.length > 0) {
+                // For next level branches, update prefix
+                const childPrefix = level === 0 ? '' : prefix + (isLast ? '    ' : '│   ');
+                
+                node.Children.forEach((child, index) => {
+                    const isChildLast = index === node.Children.length - 1;
+                    result += jsonToTreeText(child, childPrefix, isChildLast, level + 1);
+                });
+            }
+            
+            return result;
+        }
+
+        // 添加一个全局变量来跟踪已初始化的Mind Map
+        let initializedMindmaps = new Set();
+
+        // 修改标签切换函数为独立函数，方便复用
+        function createTabSwitchHandlers(textTab, visualTab, textTreeDiv, markMapDiv, mindMapId) {
+            visualTab.onclick = function() {
+                this.classList.add('active');
+                textTab.classList.remove('active');
+                markMapDiv.style.display = 'block';
+                textTreeDiv.style.display = 'none';
+                
+                if (!initializedMindmaps.has(mindMapId)) {
+                    initializeMindmap(markMapDiv, mindMapId);
+                }
+            };
+            
+            textTab.onclick = function() {
+                this.classList.add('active');
+                visualTab.classList.remove('active');
+                markMapDiv.style.display = 'none';
+                textTreeDiv.style.display = 'block';
+            };
+        }
+        
+        // 初始化Mind Map的函数
+        function initializeMindmap(container, id) {
+            if (window.markmap && window.markmap.autoLoader) {
+                try {
+                    window.markmap.autoLoader.renderAll(container);
+                    initializedMindmaps.add(id);
+                    console.log('Successfully initialized mindmap:', id);
+                } catch (e) {
+                    console.error('Error initializing mindmap:', id, e);
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'mindmap-error';
+                    errorMsg.innerHTML = `<p>Error initializing mindmap: ${e.message}</p>
+                                          <p>Please try switching to text view.</p>`;
+                    container.appendChild(errorMsg);
+                }
+            } else {
+                console.error('Markmap autoLoader not available');
+            }
+        }
+
+        // 函数：按需加载Mind Map
+        function loadMindmapOnDemand(container, markdown, mindMapId) {
+            // 创建加载器UI
+            const loader = document.createElement('div');
+            loader.className = 'mindmap-loader';
+            loader.innerHTML = '<p>Mind Map 可视化需要手动加载</p><button>加载可视化</button>';
+            
+            // 添加加载按钮事件
+            const loadButton = loader.querySelector('button');
+            loadButton.addEventListener('click', function() {
+                // 替换加载器内容而不是尝试替换节点本身
+                loader.innerHTML = '';
+                loader.className = 'markmap-container';
+                
+                const preElement = document.createElement('pre');
+                preElement.className = 'markmap';
+                preElement.textContent = markdown;
+                loader.appendChild(preElement);
+                
+                // 初始化Mind Map
+                setTimeout(() => {
+                    initializeMindmap(loader, mindMapId);
+                }, 50);
+            });
+            
+            return loader;
+        }
+
+        function renderQueryItem(id, item) {
+            const queryItemDiv = document.createElement('div');
+            queryItemDiv.className = 'query-item';
+            queryItemDiv.id = `query-item-${id}`;
+
+            const queryHeaderDiv = document.createElement('div');
+            queryHeaderDiv.className = 'query-header';
+            
+            // Create title span for the query
+            const queryTitleSpan = document.createElement('span');
+            queryTitleSpan.className = 'query-title';
+            queryTitleSpan.textContent = item.query;
+            
+            // Create rating badge if rating exists
+            const queryRatingSpan = document.createElement('span');
+            queryRatingSpan.className = 'query-rating';
+            if (item.rating) {
+                const ratingBadge = document.createElement('span');
+                ratingBadge.className = `rating-badge rating-${item.rating.toLowerCase()}`;
+                ratingBadge.textContent = item.rating.toUpperCase();
+                queryRatingSpan.appendChild(ratingBadge);
+            }
+            
+            // Add all elements to header
+            queryHeaderDiv.appendChild(queryTitleSpan);
+            queryHeaderDiv.appendChild(queryRatingSpan);
+            
+            queryHeaderDiv.onclick = function(e) {
+                // Don't expand/collapse if clicking on rating controls
+                if (e.target.closest('.query-rating-controls')) {
+                    return;
+                }
+                
+                const content = this.nextElementSibling;
+                const isOpening = content.style.display !== 'block';
+                content.style.display = isOpening ? 'block' : 'none';
+                
+                // Initialize Markmap when content is first shown
+                if (isOpening && content.querySelector('.markmap-placeholder-needs-init')) {
+                    const placeholder = content.querySelector('.markmap-placeholder-needs-init');
+                    const mindMapDataString = placeholder.dataset.mindmapdata;
+                    if (mindMapDataString) {
+                        try {
+                            // Parse JSON from the response
+                            const mindMapData = JSON.parse(mindMapDataString);
+                            console.log('Original MindMap data for item', id, ':', mindMapData);
+
+                            // Convert to Markdown
+                            const markdown = jsonToMarkdown(mindMapData);
+                            console.log('Generated Markdown for item', id, ':', markdown);
+
+                            if (markdown.trim() === '') {
+                                throw new Error('Generated empty markdown');
+                            }
+                            
+                            // 为这个Mind Map创建唯一ID
+                            const mindMapId = `mindmap-${id}-${Date.now()}`;
+                            
+                            // Create a div for text tree view
+                            const textTreeDiv = document.createElement('div');
+                            textTreeDiv.className = 'mindmap-text-view';
+                            const treeText = jsonToTreeText(mindMapData);
+                            textTreeDiv.textContent = treeText;
+                            
+                            // 创建Mind Map加载器
+                            const mindmapLoader = loadMindmapOnDemand(placeholder.parentNode, markdown, mindMapId);
+                            
+                            // Create a tab container
+                            const tabContainer = document.createElement('div');
+                            tabContainer.className = 'mindmap-tabs';
+                            
+                            // Create tabs
+                            const tabs = document.createElement('div');
+                            tabs.className = 'tabs';
+                            
+                            const textTab = document.createElement('div');
+                            textTab.className = 'tab active';
+                            textTab.textContent = '文本树视图';
+                            
+                            const visualTab = document.createElement('div');
+                            visualTab.className = 'tab';
+                            visualTab.textContent = '可视化视图';
+                            
+                            tabs.appendChild(textTab);
+                            tabs.appendChild(visualTab);
+                            
+                            // 设置切换处理
+                            createTabSwitchHandlers(textTab, visualTab, textTreeDiv, mindmapLoader, mindMapId);
+                            
+                            // Add tabs and content to container
+                            tabContainer.appendChild(tabs);
+                            
+                            // Replace the placeholder with our tab container
+                            placeholder.parentNode.replaceChild(tabContainer, placeholder);
+                            tabContainer.appendChild(textTreeDiv);
+                            tabContainer.appendChild(mindmapLoader);
+                            mindmapLoader.style.display = 'none'; // 初始隐藏可视化视图
+
+                        } catch (e) {
+                            console.error('Error processing or rendering MindMap for item:', id, e);
+                            const errorP = document.createElement('p');
+                            errorP.textContent = 'Could not render MindMap: ' + e.message;
+                            
+                            if (placeholder.parentNode) {
+                                placeholder.parentNode.replaceChild(errorP, placeholder);
+                            }
+                        }
+                    }
+                }
+            };
+
+            const queryContentDiv = document.createElement('div');
+            queryContentDiv.className = 'query-content';
+
+            let responseData;
+            try {
+                responseData = JSON.parse(item.response);
+            } catch (e) {
+                console.error('Error parsing response JSON for query:', item.query, e);
+                queryContentDiv.innerHTML = `<p>Error parsing response: ${e.message}</p><p>Original response string: ${item.response}</p>`;
+                queryItemDiv.appendChild(queryHeaderDiv);
+                queryItemDiv.appendChild(queryContentDiv);
+                return queryItemDiv;
+            }
+            
+            // Add rating controls section
+            const ratingControlsDiv = document.createElement('div');
+            ratingControlsDiv.className = 'rating-controls';
+            ratingControlsDiv.innerHTML = `
+                <h3>Rate This Query</h3>
+                <div class="rating-form">
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn rating-btn-good ${item.rating === 'good' ? 'selected' : ''}" data-rating="good" onclick="selectRating(this, '${id}')">Good</button>
+                        <button type="button" class="rating-btn rating-btn-medium ${item.rating === 'medium' ? 'selected' : ''}" data-rating="medium" onclick="selectRating(this, '${id}')">Medium</button>
+                        <button type="button" class="rating-btn rating-btn-poor ${item.rating === 'poor' ? 'selected' : ''}" data-rating="poor" onclick="selectRating(this, '${id}')">Poor</button>
+                    </div>
+                    <textarea class="rating-comment" id="comment-${id}" placeholder="Add your comments here...">${item.comment || ''}</textarea>
+                    <button type="button" class="save-rating-btn" onclick="saveRatingDirect('${id}')">Save Rating</button>
+                </div>
+            `;
+            
+            queryContentDiv.appendChild(ratingControlsDiv);
+            
+            if (responseData.Content) {
+                let contentHtml = renderMarkdown(responseData.Content);
+                contentHtml = contentHtml.replace(/\\/g, '\\\\');
+                contentHtml = contentHtml.replace(/`/g, '\\`');
+                contentHtml = contentHtml.replace(/\$\${/g, '\\${');
+                queryContentDiv.innerHTML += `<h3>Content</h3><div class="content-section">${contentHtml}</div>`;
+            }
+
+            if (responseData.Urls && responseData.Urls.length > 0) {
+                let urlsHtml = '<h3>URLs</h3><ul>';
+                responseData.Urls.forEach(url => {
+                    urlsHtml += `<li><a href="${url.Url}" target="_blank">${url.Title || url.Url}</a></li>`;
+                });
+                urlsHtml += '</ul>';
+                queryContentDiv.innerHTML += urlsHtml;
+            }
+
+            if (responseData.Images && responseData.Images.length > 0) {
+                let imagesHtml = '<h3>Images</h3><div class="image-gallery">';
+                responseData.Images.forEach(image => {
+                    imagesHtml += `<a href="${image.Url}" target="_blank" title="${image.Title}"><img src="${image.ThumbnailUrl}" alt="${image.Title}"></a>`;
+                });
+                imagesHtml += '</div>';
+                queryContentDiv.innerHTML += imagesHtml;
+            }
+
+            if (responseData.RelatedQuestions && responseData.RelatedQuestions.length > 0) {
+                let relatedQuestionsHtml = '<h3>Related Questions</h3><ul>';
+                responseData.RelatedQuestions.forEach(question => {
+                    relatedQuestionsHtml += `<li>${question}</li>`;
+                });
+                relatedQuestionsHtml += '</ul>';
+                queryContentDiv.innerHTML += relatedQuestionsHtml;
+            }
+            
+            if (responseData.MindMap) {
+                queryContentDiv.innerHTML += '<h3>Mind Map</h3>';
+                const mindMapPlaceholder = document.createElement('div');
+                mindMapPlaceholder.className = 'markmap-placeholder-needs-init';
+                mindMapPlaceholder.dataset.mindmapdata = responseData.MindMap;
+                mindMapPlaceholder.innerHTML = '<p><em>Click to load interactive MindMap...</em></p>';
+                queryContentDiv.appendChild(mindMapPlaceholder);
+            }
+
+            if (responseData.Title) {
+                 queryContentDiv.innerHTML += `<h3>Title</h3><p>${responseData.Title}</p>`;
+            }
+            if (responseData.CanvasPage) {
+                 queryContentDiv.innerHTML += `<h3>Canvas Page</h3><p>${responseData.CanvasPage}</p>`;
+            }
+            if (responseData.ContentSections) {
+                 queryContentDiv.innerHTML += `<h3>Content Sections</h3><pre>${JSON.stringify(responseData.ContentSections, null, 2)}</pre>`;
+            }
+            if (responseData.Outline) {
+                 queryContentDiv.innerHTML += `<h3>Outline</h3><pre>${JSON.stringify(responseData.Outline, null, 2)}</pre>`;
+            }
+            if (responseData.ModelResponseMessage) {
+                 queryContentDiv.innerHTML += `<h3>Model Response Message</h3><p>${responseData.ModelResponseMessage}</p>`;
+            }
+            queryContentDiv.innerHTML += `<h3>Completed</h3><p>${responseData.Completed}</p>`;
+            if (responseData.ErrorMessage) {
+                 queryContentDiv.innerHTML += `<h3>Error Message</h3><p>${responseData.ErrorMessage}</p>`;
+            }
+
+            queryItemDiv.appendChild(queryHeaderDiv);
+            queryItemDiv.appendChild(queryContentDiv);
+            return queryItemDiv;
+        }
+
+        function renderCurrentPage() {
+            queriesContainer.innerHTML = ''; 
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredDataEntries.length);
+            const pageEntries = filteredDataEntries.slice(startIndex, endIndex);
+
+            if (pageEntries.length === 0 && filteredDataEntries.length === 0 && allDataEntries.length > 0) {
+                 queriesContainer.innerHTML = '<p>No results match your filters.</p>';
+            } else if (allDataEntries.length === 0) {
+                queriesContainer.innerHTML = '<p>No data loaded.</p>';
+            }
+
+            pageEntries.forEach(([id, item]) => {
+                const queryElement = renderQueryItem(id, item);
+                queriesContainer.appendChild(queryElement);
+            });
+            updatePaginationControls();
+        }
+
+        function setupPaginationControls() {
+            paginationControlsContainer.innerHTML = ''; 
+            if (totalPages === 0 && allDataEntries.length === 0) { 
+                paginationControlsContainer.innerHTML = '<p>No data to paginate.</p>';
+                return;
+            }
+            if (totalPages === 0 && filteredDataEntries.length === 0 && allDataEntries.length > 0){
+                 paginationControlsContainer.innerHTML = ''; 
+                 return;
+            }
+            if (totalPages === 1 && filteredDataEntries.length <= itemsPerPage) { 
+                 paginationControlsContainer.innerHTML = '';
+                 return;
+            }
+
+            const prevButton = document.createElement('button');
+            prevButton.id = 'prevPage';
+            prevButton.textContent = 'Previous';
+            prevButton.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderCurrentPage();
+                    updateUrl();
+                }
+            };
+
+            const pageInfo = document.createElement('span');
+            pageInfo.id = 'pageInfo';
+
+            const nextButton = document.createElement('button');
+            nextButton.id = 'nextPage';
+            nextButton.textContent = 'Next';
+            nextButton.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderCurrentPage();
+                    updateUrl();
+                }
+            };
+            
+            paginationControlsContainer.appendChild(prevButton);
+            paginationControlsContainer.appendChild(pageInfo);
+            paginationControlsContainer.appendChild(nextButton);
+            
+            updatePaginationControls();
+        }
+        
+        function updatePaginationControls() {
+            const prevButton = document.getElementById('prevPage');
+            const nextButton = document.getElementById('nextPage');
+            const pageInfo = document.getElementById('pageInfo');
+
+            if (!prevButton && !nextButton && !pageInfo) return; 
+
+            if (prevButton) prevButton.disabled = currentPage === 1;
+            if (nextButton) nextButton.disabled = currentPage === totalPages || totalPages === 0;
+            if (pageInfo) {
+                 if (totalPages === 0) {
+                    pageInfo.textContent = filteredDataEntries.length > 0 ? `Page 1 of 1` : 'No results';
+                 } else {
+                    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+                 }
+            }
+        }
+
+        function renderMarkdown(md) {
+            if (!md) return '';
+            let html = md;
+            html = html.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
+            html = html.replace(/^###### (.*$)/gim, '<h6>$1</h6>');
+            html = html.replace(/^##### (.*$)/gim, '<h5>$1</h5>');
+            html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+            html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+            html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+            html = html.replace(/^\* (.*$)/gim, '<ul>\n<li>$1</li>\n</ul>');
+            html = html.replace(/^\- (.*$)/gim, '<ul>\n<li>$1</li>\n</ul>');
+            html = html.replace(/^\+ (.*$)/gim, '<ul>\n<li>$1</li>\n</ul>');
+            html = html.replace(/<\/ul>\s*<ul>/g, ''); 
+            html = html.replace(/^\d+\. (.*$)/gim, '<ol>\n<li>$1</li>\n</ol>');
+            html = html.replace(/<\/ol>\s*<ol>/g, ''); 
+            html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
+            html = html.replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>');
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            html = html.replace(/\[\^(\d+)\^\]/g, '<sup class="citation">[$1]</sup>');
+            html = html.split(/\n\s*\n/).map(paragraph => {
+                if (paragraph.startsWith('<ul') || paragraph.startsWith('<ol') || paragraph.startsWith('<blockquote') || paragraph.startsWith('<h') || paragraph.startsWith('<pre')) {
+                    return paragraph;
+                }
+                return paragraph.trim() ? `<p>${paragraph.trim()}</p>` : '';
+            }).join('');
+            return html;
+        }
+
+        // Listen for browser back/forward navigation
+        window.addEventListener('popstate', function() {
+            const urlParams = getUrlParams();
+            
+            // Update filter inputs
+            if (document.getElementById('searchQueryText')) {
+                document.getElementById('searchQueryText').value = urlParams.searchQuery;
+            }
+            if (document.getElementById('searchContentText')) {
+                document.getElementById('searchContentText').value = urlParams.searchContent;
+            }
+            if (document.getElementById('filterCompleted')) {
+                document.getElementById('filterCompleted').value = urlParams.completed;
+            }
+            if (document.getElementById('filterHasError')) {
+                document.getElementById('filterHasError').value = urlParams.hasError;
+            }
+            
+            // Update current page
+            currentPage = urlParams.page;
+            
+            // Apply filters without updating URL (to avoid loop)
+            applyFiltersAndSearch();
+        });
+
+        document.addEventListener('DOMContentLoaded', loadQueries);
+
+        // 全局函数：选择评分
+        function selectRating(buttonElement, id) {
+            console.log(`评分按钮被点击，ID: ${id}, 评分: ${buttonElement.dataset.rating}`);
+            
+            // 移除同组中其他按钮的选中状态
+            const ratingButtons = buttonElement.parentElement.querySelectorAll('.rating-btn');
+            ratingButtons.forEach(btn => btn.classList.remove('selected'));
+            
+            // 添加当前按钮选中状态
+            buttonElement.classList.add('selected');
+            
+            // 保存当前选择的评分
+            currentRatingMap[id] = buttonElement.dataset.rating;
+            console.log('当前选择的评分:', currentRatingMap);
+        }
+        
+        // 全局函数：直接保存评分
+        function saveRatingDirect(id) {
+            console.log(`保存评分按钮被点击，ID: ${id}`);
+            
+            try {
+                // 获取选中的评分
+                const rating = currentRatingMap[id];
+                if (!rating) {
+                    alert('请先选择一个评分（Good/Medium/Poor）');
+                    return;
+                }
+                
+                // 获取评论
+                const commentElement = document.getElementById(`comment-${id}`);
+                const comment = commentElement ? commentElement.value : '';
+                
+                console.log(`准备保存 - ID: ${id}, 评分: ${rating}, 评论长度: ${comment.length}`);
+                
+                // 查找要更新的条目
+                const entryIndex = allDataEntries.findIndex(entry => entry[0] === id);
+                if (entryIndex === -1) {
+                    alert(`错误：找不到ID为 ${id} 的条目`);
+                    return;
+                }
+                
+                // 更新内存中的数据
+                let entry = allDataEntries[entryIndex][1];
+                
+                // 保存旧值
+                const oldRating = entry.rating;
+                const oldComment = entry.comment;
+                
+                // 更新评分和评论
+                entry.rating = rating;
+                entry.comment = comment;
+                
+                console.log(`内存数据已更新 - 评分从 ${oldRating || '无'} 变为 ${rating}`);
+                
+                // 更新过滤数据（如果存在）
+                const filteredIndex = filteredDataEntries.findIndex(entry => entry[0] === id);
+                if (filteredIndex !== -1) {
+                    filteredDataEntries[filteredIndex][1].rating = rating;
+                    filteredDataEntries[filteredIndex][1].comment = comment;
+                }
+                
+                // 准备要保存的数据
+                const dataToSave = {};
+                dataToSave[id] = JSON.parse(JSON.stringify(entry)); // 创建深拷贝
+                
+                // 发送保存请求
+                console.log('开始发送XHR请求...');
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `${window.location.origin}/save-single-rating`, true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                
+                // 设置请求超时
+                xhr.timeout = 10000; // 10秒
+                
+                // 监听请求完成
+                xhr.onload = function() {
+                    console.log('XHR响应状态:', xhr.status);
+                    console.log('XHR响应文本:', xhr.responseText);
+                    
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        // 更新UI
+                        updateRatingBadgeSimple(id, rating);
+                        dataModified = true;
+                        alert('评分保存成功！');
+                    } else {
+                        alert(`保存失败: ${xhr.status} ${xhr.statusText}`);
+                    }
+                };
+                
+                // 监听网络错误
+                xhr.onerror = function() {
+                    console.error('XHR请求失败');
+                    alert('网络错误，请求失败');
+                };
+                
+                // 监听超时
+                xhr.ontimeout = function() {
+                    console.error('XHR请求超时');
+                    alert('请求超时，请稍后再试');
+                };
+                
+                // 转换数据并发送
+                const jsonData = JSON.stringify(dataToSave);
+                console.log('发送的JSON数据:', jsonData);
+                xhr.send(jsonData);
+                console.log('XHR请求已发送');
+                
+            } catch (error) {
+                console.error('保存评分过程中出错:', error);
+                alert(`保存评分出错: ${error.message}`);
+            }
+        }
+        
+        // 简化版的更新评分徽章函数
+        function updateRatingBadgeSimple(id, rating) {
+            try {
+                const queryItem = document.getElementById(`query-item-${id}`);
+                if (!queryItem) {
+                    console.error(`找不到query-item-${id}元素`);
+                    return;
+                }
+                
+                const queryRating = queryItem.querySelector('.query-rating');
+                if (!queryRating) {
+                    console.error(`在query-item-${id}中找不到.query-rating元素`);
+                    return;
+                }
+                
+                // 清空当前内容
+                queryRating.innerHTML = '';
+                
+                // 创建新徽章
+                const badge = document.createElement('span');
+                badge.className = `rating-badge rating-${rating.toLowerCase()}`;
+                badge.textContent = rating.toUpperCase();
+                
+                queryRating.appendChild(badge);
+                console.log(`评分徽章已更新为 ${rating}`);
+            } catch (error) {
+                console.error('更新评分徽章时出错:', error);
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -1,6 +1,6 @@
 {
   "name": "web-page-scorer",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A desktop application for efficiently scoring web pages from Excel files with enhanced keyboard shortcuts, configurable smart preloading, auto-advance features, and page jump functionality",
   "main": "main.js",
   "homepage": "./",

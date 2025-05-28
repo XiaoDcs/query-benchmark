@@ -6,7 +6,9 @@ const fs = require('fs');
 let mainWindow;
 let webView;
 let selectedExcelFile = null; // 存储用户选择的Excel文件路径
-let preloadCache = new Map(); // 预加载缓存
+let preloadCache = new Map(); // 预加载缓存：URL -> {view, timestamp, pageIndex}
+let currentPageIndex = 1; // 当前页面索引
+let maxCacheSize = 10; // 最大缓存数量
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -27,29 +29,20 @@ function createWindow() {
   });
   
   // Create BrowserView for web content
-  webView = new BrowserView({
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true
-    }
-  });
+  webView = createSafeBrowserView();
+  
+  if (!webView) {
+    console.error('Failed to create initial BrowserView');
+    return;
+  }
   
   mainWindow.setBrowserView(webView);
   
   // Position the BrowserView
   const setBounds = () => {
     const bounds = mainWindow.getBounds();
-    
-    // Updated calculation based on new CSS layout:
-    // Body padding: 15px
-    // Container padding: 15px  
-    // Header height ≈ 24px (compressed)
-    // Controls height ≈ 50px (compressed)
-    // Progress bar ≈ 20px (compressed)
-    // Total top offset ≈ 124px
-    
     const webViewBounds = {
-      x: 30,  // body(15) + container(15) 
+      x: 30,  // 左边距
       y: 124, // header + controls + progress + margins (reduced)
       width: Math.max(600, bounds.width - 350),  // full width - sidebar(320) - gaps(30)
       height: Math.max(500, bounds.height - 150) // full height - top offset - minimal bottom margin
@@ -58,16 +51,34 @@ function createWindow() {
     console.log('Window bounds:', bounds);
     console.log('BrowserView bounds:', webViewBounds);
     
-    webView.setBounds(webViewBounds);
+    if (webView && typeof webView.setBounds === 'function') {
+      try {
+        webView.setBounds(webViewBounds);
+      } catch (error) {
+        console.error('Error setting BrowserView bounds:', error);
+      }
+    }
   };
   
   setBounds();
   mainWindow.on('resize', setBounds);
   
   mainWindow.on('closed', function () {
+    // Clean up all BrowserViews
+    try {
+      safeBrowserViewDestroy(webView);
+      
+      // Clean up all cached preload views
+      for (const [url, entry] of preloadCache.entries()) {
+        safeBrowserViewDestroy(entry.view);
+      }
+      preloadCache.clear();
+    } catch (error) {
+      console.error('Error during cleanup:', error);
+    }
+    
     mainWindow = null;
     webView = null;
-    preloadCache.clear();
   });
 }
 
@@ -85,6 +96,22 @@ app.whenReady().then(() => {
 app.on('window-all-closed', function () {
   // 取消注册所有全局快捷键
   globalShortcut.unregisterAll();
+  
+  // Clean up all BrowserViews before quitting
+  try {
+    safeBrowserViewDestroy(webView);
+    
+    // Clean up all cached preload views
+    for (const [url, entry] of preloadCache.entries()) {
+      safeBrowserViewDestroy(entry.view);
+    }
+    preloadCache.clear();
+  } catch (error) {
+    console.error('Error during app cleanup:', error);
+  }
+  
+  webView = null;
+  
   if (process.platform !== 'darwin') app.quit();
 });
 
@@ -149,121 +176,344 @@ function registerGlobalShortcuts() {
   });
 }
 
-// Handle loading URL in BrowserView
-ipcMain.handle('load-url', async (event, url) => {
+// Helper function to safely check if a BrowserView is valid
+function isValidBrowserView(browserView) {
   try {
-    if (webView && url && url.trim() && url.startsWith('http')) {
-      await webView.webContents.loadURL(url);
-      return { success: true };
+    if (!browserView) {
+      return false;
     }
-    return { success: false, error: 'Invalid or empty URL provided' };
+    
+    // Check if webContents exists and is not null
+    if (!browserView.webContents) {
+      return false;
+    }
+    
+    // Check if isDestroyed method exists
+    if (typeof browserView.webContents.isDestroyed !== 'function') {
+      return false;
+    }
+    
+    // Finally check if it's not destroyed
+    return !browserView.webContents.isDestroyed();
   } catch (error) {
-    console.error('Error loading URL:', error);
-    return { success: false, error: error.message };
+    console.error('Error checking BrowserView validity:', error);
+    return false;
   }
-});
+}
 
-// Handle preloading URL (for performance optimization)
-ipcMain.handle('preload-url', async (event, url) => {
+// Helper function to safely destroy a BrowserView
+function safeBrowserViewDestroy(browserView) {
   try {
-    if (!url) {
-      return { success: false, error: 'No URL provided' };
+    if (!browserView) {
+      return;
     }
     
-    // Check if already cached
-    if (preloadCache.has(url)) {
-      return { success: true, cached: true };
+    // Multiple safety checks
+    if (browserView.webContents && 
+        typeof browserView.webContents.destroy === 'function') {
+      
+      // Check if already destroyed before attempting to destroy
+      if (typeof browserView.webContents.isDestroyed === 'function' && 
+          !browserView.webContents.isDestroyed()) {
+        browserView.webContents.destroy();
+      }
     }
-    
-    // Create a hidden BrowserView for preloading
-    const preloadView = new BrowserView({
+  } catch (error) {
+    console.error('Error safely destroying BrowserView:', error);
+    // Don't re-throw, just log the error
+  }
+}
+
+// Helper function to safely create a BrowserView
+function createSafeBrowserView(options = {}) {
+  try {
+    const defaultOptions = {
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
-        show: false
+        webSecurity: true,
+        allowRunningInsecureContent: false,
+        plugins: false,
+        experimentalFeatures: false,
+        ...options.webPreferences
+      },
+      ...options
+    };
+    
+    const browserView = new BrowserView(defaultOptions);
+    
+    // Set user agent if webContents is available
+    if (browserView && browserView.webContents && 
+        typeof browserView.webContents.setUserAgent === 'function') {
+      browserView.webContents.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    }
+    
+    return browserView;
+  } catch (error) {
+    console.error('Error creating BrowserView:', error);
+    return null;
+  }
+}
+
+// Handle loading URLs in the BrowserView
+ipcMain.handle('load-url', async (event, url) => {
+  try {
+    // Validate URL first
+    if (!url || typeof url !== 'string' || !url.trim()) {
+      return { success: false, error: 'Invalid URL provided' };
+    }
+    
+    // Create new BrowserView or reuse existing one
+    if (!isValidBrowserView(webView)) {
+      // Safely destroy the old webView if it exists but is invalid
+      if (webView) {
+        safeBrowserViewDestroy(webView);
+        webView = null;
       }
-    });
+      
+      try {
+        webView = createSafeBrowserView();
+        
+        if (!webView) {
+          return { success: false, error: 'Failed to create BrowserView' };
+        }
+        
+        if (mainWindow && webView) {
+          mainWindow.setBrowserView(webView);
+        }
+      } catch (createError) {
+        console.error('Error creating BrowserView:', createError);
+        return { success: false, error: 'Failed to create BrowserView: ' + createError.message };
+      }
+    }
+    
+    // Validate webView again before loading URL
+    if (!isValidBrowserView(webView)) {
+      return { success: false, error: 'BrowserView is invalid after creation' };
+    }
+    
+    await webView.webContents.loadURL(url);
+    return { success: true };
+  } catch (error) {
+    console.error('Error loading URL:', error);
+    
+    // If first attempt fails, try one retry with complete recreation
+    try {
+      // Clean up and recreate everything
+      if (webView) {
+        safeBrowserViewDestroy(webView);
+        webView = null;
+      }
+      
+      webView = createSafeBrowserView();
+      
+      if (!webView) {
+        return { success: false, error: 'Failed to create BrowserView on retry' };
+      }
+      
+      if (mainWindow && webView) {
+        mainWindow.setBrowserView(webView);
+      }
+      
+      if (isValidBrowserView(webView)) {
+        await webView.webContents.loadURL(url);
+        return { success: true };
+      } else {
+        return { success: false, error: 'Failed to create valid BrowserView on retry' };
+      }
+    } catch (retryError) {
+      console.error('Retry failed:', retryError);
+      return { success: false, error: retryError.message };
+    }
+  }
+});
+
+// Handle refreshing current page
+ipcMain.handle('refresh-current-page', async (event, url) => {
+  try {
+    // Validate URL first
+    if (!url || typeof url !== 'string' || !url.trim() || !url.startsWith('http')) {
+      return { success: false, error: 'Invalid URL provided for refresh' };
+    }
+    
+    if (isValidBrowserView(webView)) {
+      try {
+        // First try to reload the current page
+        await webView.webContents.reload();
+        return { success: true };
+      } catch (reloadError) {
+        console.error('Error during reload:', reloadError);
+        // Fall through to recreation logic
+      }
+    }
+    
+    // If webView is destroyed or reload failed, recreate it and load the URL
+    if (webView) {
+      safeBrowserViewDestroy(webView);
+      webView = null;
+    }
     
     try {
-      await preloadView.webContents.loadURL(url);
+      webView = createSafeBrowserView();
       
-      // Cache the preloaded page
-      preloadCache.set(url, {
-        view: preloadView,
-        timestamp: Date.now()
-      });
-      
-      // Clean up old cache entries (keep only 20 most recent)
-      if (preloadCache.size > 20) {
-        const sortedEntries = Array.from(preloadCache.entries())
-          .sort((a, b) => a[1].timestamp - b[1].timestamp);
-        
-        // Remove oldest entries
-        for (let i = 0; i < 5; i++) {
-          const [oldUrl, oldEntry] = sortedEntries[i];
-          if (oldEntry.view) {
-            oldEntry.view.webContents.destroy();
-          }
-          preloadCache.delete(oldUrl);
-        }
+      if (!webView) {
+        return { success: false, error: 'Failed to create BrowserView for refresh' };
       }
       
-      return { success: true, cached: false };
-    } catch (error) {
-      preloadView.webContents.destroy();
-      return { success: false, error: error.message };
+      if (mainWindow && webView) {
+        mainWindow.setBrowserView(webView);
+      }
+      
+      if (isValidBrowserView(webView)) {
+        await webView.webContents.loadURL(url);
+        return { success: true };
+      } else {
+        return { success: false, error: 'Failed to create valid BrowserView for refresh' };
+      }
+    } catch (createError) {
+      console.error('Error creating BrowserView for refresh:', createError);
+      return { success: false, error: 'Failed to recreate BrowserView: ' + createError.message };
     }
   } catch (error) {
-    console.error('Error preloading URL:', error);
+    console.error('Error refreshing page:', error);
     return { success: false, error: error.message };
   }
 });
 
-// Handle adjusting BrowserView position
-ipcMain.handle('adjust-browser-view', async (event, elementBounds) => {
+// Handle dynamic preloading around current page
+ipcMain.handle('dynamic-preload', async (event, { currentIndex, excelData, columns, maxPreloadPages = 5 }) => {
   try {
-    if (webView && elementBounds) {
-      // Use the exact element bounds from the frontend
-      webView.setBounds({
-        x: Math.round(elementBounds.x),
-        y: Math.round(elementBounds.y),
-        width: Math.round(elementBounds.width),
-        height: Math.round(elementBounds.height)
-      });
-      console.log('BrowserView adjusted to:', elementBounds);
-      return { success: true };
+    currentPageIndex = currentIndex;
+    const totalPages = excelData.length - 1; // 排除标题行
+    
+    // Calculate preload range based on maxPreloadPages
+    const preloadBefore = Math.floor(maxPreloadPages * 0.3); // 30% for previous pages
+    const preloadAfter = maxPreloadPages - preloadBefore; // 70% for next pages
+    
+    // Calculate which pages to preload
+    const pagesToPreload = [];
+    
+    // Preload previous pages (for quick back navigation)
+    for (let i = Math.max(1, currentIndex - preloadBefore); i < currentIndex; i++) {
+      pagesToPreload.push(i);
     }
-    return { success: false, error: 'No bounds provided' };
+    
+    // Preload next pages (for quick forward navigation)
+    for (let i = currentIndex + 1; i <= Math.min(totalPages, currentIndex + preloadAfter); i++) {
+      pagesToPreload.push(i);
+    }
+    
+    let preloadCount = 0;
+    let errorCount = 0;
+    
+    // Clean up cache entries that are outside our range
+    const validIndices = new Set([...pagesToPreload, currentIndex]);
+    for (const [url, entry] of preloadCache.entries()) {
+      if (!validIndices.has(entry.pageIndex)) {
+        safeBrowserViewDestroy(entry.view);
+        preloadCache.delete(url);
+      }
+    }
+    
+    // Preload pages
+    for (const pageIndex of pagesToPreload) {
+      try {
+        if (pageIndex >= 1 && pageIndex <= totalPages) {
+          const rowData = excelData[pageIndex];
+          const url = rowData && rowData[columns.link];
+          
+          if (url && url.trim() && url.startsWith('http')) {
+            // Check if already cached
+            if (!preloadCache.has(url)) {
+              // Create a hidden BrowserView for preloading
+              const preloadView = createSafeBrowserView({
+                webPreferences: {
+                  show: false
+                }
+              });
+              
+              if (!preloadView) {
+                errorCount++;
+                continue; // Skip this URL if BrowserView creation failed
+              }
+              
+              // Set initial bounds for the preload view (reasonable size, positioned off-screen)
+              preloadView.setBounds({ x: -2000, y: -2000, width: 1200, height: 800 });
+              
+              try {
+                await preloadView.webContents.loadURL(url);
+                
+                // Double-check that the view is still valid after loading
+                if (isValidBrowserView(preloadView)) {
+                  // Cache the preloaded page
+                  preloadCache.set(url, {
+                    view: preloadView,
+                    timestamp: Date.now(),
+                    pageIndex: pageIndex
+                  });
+                  
+                  preloadCount++;
+                } else {
+                  // Clean up invalid view
+                  safeBrowserViewDestroy(preloadView);
+                  errorCount++;
+                }
+                
+                // Enforce cache size limit
+                if (preloadCache.size > maxCacheSize) {
+                  const sortedEntries = Array.from(preloadCache.entries())
+                    .sort((a, b) => a[1].timestamp - b[1].timestamp);
+                  
+                  // Remove oldest entries
+                  const toRemove = preloadCache.size - maxCacheSize;
+                  for (let i = 0; i < toRemove; i++) {
+                    const [oldUrl, oldEntry] = sortedEntries[i];
+                    safeBrowserViewDestroy(oldEntry.view);
+                    preloadCache.delete(oldUrl);
+                  }
+                }
+              } catch (loadError) {
+                safeBrowserViewDestroy(preloadView);
+                errorCount++;
+              }
+            }
+          }
+        }
+      } catch (pageError) {
+        errorCount++;
+      }
+      
+      // Add small delay between preloads to avoid overwhelming the system
+      if (preloadCount > 0 && preloadCount % 3 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+    
+    return { 
+      success: true, 
+      preloadCount, 
+      errorCount,
+      cacheSize: preloadCache.size,
+      cachedPages: Array.from(preloadCache.values()).map(entry => entry.pageIndex).sort((a, b) => a - b)
+    };
   } catch (error) {
-    console.error('Error adjusting BrowserView:', error);
+    console.error('Error in dynamic preload:', error);
     return { success: false, error: error.message };
   }
 });
 
-// Handle hiding BrowserView
-ipcMain.handle('hide-browser-view', async () => {
+// Handle getting preload status
+ipcMain.handle('get-preload-status', async () => {
   try {
-    if (webView) {
-      webView.setBounds({ x: -10000, y: -10000, width: 1, height: 1 });
-      return { success: true };
-    }
-    return { success: false };
+    const status = {
+      cacheSize: preloadCache.size,
+      maxCacheSize,
+      cachedPages: Array.from(preloadCache.values()).map(entry => entry.pageIndex).sort((a, b) => a - b),
+      cachedUrls: Array.from(preloadCache.keys())
+    };
+    return { success: true, status };
   } catch (error) {
-    console.error('Error hiding BrowserView:', error);
-    return { success: false, error: error.message };
-  }
-});
-
-// Handle showing BrowserView
-ipcMain.handle('show-browser-view', async () => {
-  try {
-    if (webView) {
-      // BrowserView will be repositioned by the next adjust call
-      return { success: true };
-    }
-    return { success: false };
-  } catch (error) {
-    console.error('Error showing BrowserView:', error);
+    console.error('Error getting preload status:', error);
     return { success: false, error: error.message };
   }
 });
@@ -336,6 +586,8 @@ ipcMain.handle('load-excel', async () => {
         columns.issue = index;
       } else if (headerStr.includes('screenshot')) {
         columns.screenshot = index;
+      } else if (headerStr.includes('response')) {
+        columns.response = index;
       }
     });
     
@@ -347,6 +599,7 @@ ipcMain.handle('load-excel', async () => {
     if (columns.result === undefined) columns.result = 3;
     if (columns.issue === undefined) columns.issue = 4;
     if (columns.screenshot === undefined) columns.screenshot = headers.length;
+    if (columns.response === undefined) columns.response = headers.length;
     
     console.log('Columns detected:', columns);
     console.log('First few rows:', data.slice(0, 3));
@@ -384,10 +637,10 @@ ipcMain.handle('save-excel', async (event, data) => {
   }
 });
 
-// Handle taking screenshot
+// Handle taking screenshots
 ipcMain.handle('take-screenshot', async () => {
   try {
-    if (webView) {
+    if (isValidBrowserView(webView)) {
       const image = await webView.webContents.capturePage();
       const buffer = image.toPNG();
       
@@ -495,4 +748,162 @@ ipcMain.handle('download-sample-excel', async () => {
     console.error('Error downloading sample Excel template:', error);
     return { success: false, error: error.message };
   }
-}); 
+});
+
+// Handle switching to preloaded BrowserView (for instant loading)
+ipcMain.handle('switch-to-preloaded', async (event, url, targetBounds) => {
+  try {
+    if (!url || typeof url !== 'string' || !url.trim()) {
+      return { success: false, error: 'No valid URL provided' };
+    }
+    
+    // Check if we have a preloaded view for this URL
+    if (preloadCache.has(url)) {
+      const cachedEntry = preloadCache.get(url);
+      
+      if (cachedEntry && cachedEntry.view && isValidBrowserView(cachedEntry.view)) {
+        try {
+          // Switch to the preloaded BrowserView
+          const oldWebView = webView;
+          webView = cachedEntry.view;
+          
+          if (mainWindow && webView) {
+            mainWindow.setBrowserView(webView);
+            
+            // If bounds are provided, set them immediately
+            if (targetBounds) {
+              webView.setBounds({
+                x: Math.round(targetBounds.x),
+                y: Math.round(targetBounds.y),
+                width: Math.round(targetBounds.width),
+                height: Math.round(targetBounds.height)
+              });
+            }
+          }
+          
+          // Clean up the old view if it's not in cache and not null
+          if (oldWebView && isValidBrowserView(oldWebView)) {
+            const isInCache = Array.from(preloadCache.values()).some(entry => entry.view === oldWebView);
+            if (!isInCache) {
+              safeBrowserViewDestroy(oldWebView);
+            }
+          }
+          
+          return { success: true, preloaded: true };
+        } catch (switchError) {
+          console.error('Error switching to preloaded view:', switchError);
+          // Remove the problematic cache entry
+          preloadCache.delete(url);
+          return { success: false, preloaded: false, error: switchError.message };
+        }
+      } else {
+        // Remove invalid cache entry
+        if (cachedEntry && cachedEntry.view) {
+          safeBrowserViewDestroy(cachedEntry.view);
+        }
+        preloadCache.delete(url);
+        return { success: false, preloaded: false, error: 'Cached view is invalid' };
+      }
+    } else {
+      // Fallback to normal loading
+      return { success: false, preloaded: false, error: 'No preloaded view found' };
+    }
+  } catch (error) {
+    console.error('Error switching to preloaded view:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Handle adjusting BrowserView position
+ipcMain.handle('adjust-browser-view', async (event, elementBounds) => {
+  try {
+    if (webView && elementBounds) {
+      // Use the exact element bounds from the frontend
+      webView.setBounds({
+        x: Math.round(elementBounds.x),
+        y: Math.round(elementBounds.y),
+        width: Math.round(elementBounds.width),
+        height: Math.round(elementBounds.height)
+      });
+      console.log('BrowserView adjusted to:', elementBounds);
+      return { success: true };
+    }
+    return { success: false, error: 'No bounds provided' };
+  } catch (error) {
+    console.error('Error adjusting BrowserView:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Handle hiding BrowserView
+ipcMain.handle('hide-browser-view', async () => {
+  try {
+    if (mainWindow) {
+      // 完全移除任何BrowserView，不管是预加载的还是普通的
+      mainWindow.setBrowserView(null);
+      console.log('BrowserView hidden by removing from window');
+      return { success: true };
+    }
+    return { success: false };
+  } catch (error) {
+    console.error('Error hiding BrowserView:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Handle showing BrowserView
+ipcMain.handle('show-browser-view', async () => {
+  try {
+    if (webView && mainWindow) {
+      // 重新将当前的BrowserView添加到窗口
+      mainWindow.setBrowserView(webView);
+      
+      // 重新计算并设置BrowserView的正确位置
+      const bounds = mainWindow.getBounds();
+      const webViewBounds = {
+        x: 30,  // 左边距
+        y: 124, // header + controls + progress + margins
+        width: Math.max(600, bounds.width - 350),  // full width - sidebar(320) - gaps(30)
+        height: Math.max(500, bounds.height - 150) // full height - top offset - minimal bottom margin
+      };
+      
+      webView.setBounds(webViewBounds);
+      console.log('BrowserView shown and repositioned to:', webViewBounds);
+      return { success: true };
+    }
+    return { success: false, error: 'No webView or mainWindow available' };
+  } catch (error) {
+    console.error('Error showing BrowserView:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Clean up invalid cache entries periodically
+function cleanupInvalidCache() {
+  try {
+    const invalidUrls = [];
+    
+    for (const [url, entry] of preloadCache.entries()) {
+      if (!entry || !entry.view || !isValidBrowserView(entry.view)) {
+        invalidUrls.push(url);
+        if (entry && entry.view) {
+          safeBrowserViewDestroy(entry.view);
+        }
+      }
+    }
+    
+    // Remove invalid entries
+    for (const url of invalidUrls) {
+      preloadCache.delete(url);
+    }
+    
+    if (invalidUrls.length > 0) {
+      console.log(`Cleaned up ${invalidUrls.length} invalid cache entries`);
+    }
+  } catch (error) {
+    console.error('Error during cache cleanup:', error);
+  }
+}
+
+// Run cache cleanup every 30 seconds
+setInterval(cleanupInvalidCache, 30000); 

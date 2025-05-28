@@ -33,6 +33,10 @@
       display: flex;
       gap: 8px;
       align-items: center;
+      flex-wrap: wrap; /* 允许换行以防万一 */
+    }
+    .nav-buttons button {
+      white-space: nowrap; /* 防止按钮文字换行 */
     }
     .score-buttons {
       display: flex;
@@ -134,6 +138,40 @@
       margin: 0 0 10px 0;
       font-size: 16px;
       color: #1976d2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .toggle-progress-btn {
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      padding: 0;
+      line-height: 1;
+    }
+    .toggle-progress-btn:hover {
+      background-color: #1565c0;
+      transform: scale(1.1);
+    }
+    .progress-content {
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    .progress-content.collapsed {
+      max-height: 0;
+      opacity: 0;
+      padding: 0;
+      margin: 0;
     }
     .progress-stats {
       display: flex;
@@ -149,29 +187,49 @@
       font-weight: bold;
       text-align: center;
     }
-    .progress-grid {
-      display: grid;
-      grid-template-columns: repeat(20, 1fr);
-      gap: 2px;
-      margin-bottom: 10px;
-      padding: 8px;
+    .progress-grid-container {
+      position: relative;
       background-color: #ffffff;
       border-radius: 4px;
       border: 1px solid #e1f5fe;
-      max-height: 200px;
+      margin-bottom: 10px;
+      max-height: 180px;
+      overflow: hidden;
+    }
+    .progress-grid {
+      display: grid;
+      grid-template-columns: 24px repeat(15, 1fr);
+      gap: 1px;
+      padding: 8px;
+      max-height: 180px;
       overflow-y: auto;
+      position: relative;
+    }
+    .progress-row-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      color: #666;
+      font-weight: bold;
+      background-color: #f5f5f5;
+      border-radius: 2px;
+      min-height: 14px;
+      grid-column: 1;
     }
     .progress-item {
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
       border-radius: 2px;
       cursor: pointer;
       transition: all 0.2s;
       position: relative;
+      min-width: 14px;
     }
     .progress-item:hover {
-      transform: scale(1.2);
+      transform: scale(1.3);
       z-index: 10;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
     .progress-item.pass {
       background-color: #4caf50;
@@ -590,47 +648,263 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 2147483647; /* 使用最大z-index值确保在所有内容之上 */
+      z-index: 999999;
       cursor: pointer;
     }
+    
     .fullscreen-image {
       max-width: 90%;
       max-height: 90%;
       object-fit: contain;
+      border-radius: 4px;
     }
     
-    /* Issue自动Fail开关样式 */
-    .auto-fail-toggle {
+    /* Response panel styles */
+    .response-panel {
+      background-color: #f9f9f9;
+      padding: 12px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .response-panel h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .toggle-response-btn {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin: 8px 0;
+      justify-content: center;
+      transition: all 0.2s;
+      padding: 0;
+      line-height: 1;
+    }
+    
+    .toggle-response-btn:hover {
+      background-color: #3367d6;
+      transform: scale(1.1);
+    }
+    
+    .response-content {
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    
+    .response-content.collapsed {
+      max-height: 0;
+      opacity: 0;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .response-tabs {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 10px;
+      gap: 5px;
+    }
+    
+    .response-tab {
+      padding: 6px 12px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      font-size: 12px;
+      background-color: #f0f0f0;
+      color: #666;
+      transition: all 0.2s;
+    }
+    
+    .response-tab.active {
+      background-color: #fff;
+      border-color: #ddd;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .response-tab:hover {
+      background-color: #e8e8e8;
+    }
+    
+    .response-tab-content {
+      display: none;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    
+    .response-tab-content.active {
+      display: block;
+    }
+    
+    .response-content-section {
+      background-color: #fff;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #eee;
+      margin-bottom: 8px;
+      white-space: pre-wrap;
+      font-family: inherit;
+      font-size: 12px;
+      line-height: 1.4;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .response-urls {
+      background-color: #fff;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #eee;
+      margin-bottom: 8px;
+    }
+    
+    .response-urls ul {
+      margin: 0;
+      padding-left: 15px;
+      font-size: 11px;
+    }
+    
+    .response-urls li {
+      margin-bottom: 4px;
+    }
+    
+    .response-urls a {
+      color: #4285f4;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    
+    .response-urls a:hover {
+      text-decoration: underline;
+    }
+    
+    .response-images {
+      background-color: #fff;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #eee;
+      margin-bottom: 8px;
+    }
+    
+    .response-image-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    
+    .response-image-gallery img {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .response-image-gallery img:hover {
+      transform: scale(1.1);
+    }
+    
+    .response-related-questions {
+      background-color: #fff;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #eee;
+      margin-bottom: 8px;
+    }
+    
+    .response-related-questions ul {
+      margin: 0;
+      padding-left: 15px;
+      font-size: 11px;
+    }
+    
+    .response-related-questions li {
+      margin-bottom: 4px;
+    }
+    
+    .response-error {
+      background-color: #ffebee;
+      color: #c62828;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ffcdd2;
       font-size: 12px;
     }
-    .toggle-switch {
-      position: relative;
-      width: 40px;
-      height: 20px;
-      background-color: #ccc;
-      border-radius: 10px;
+    
+    .response-no-data {
+      background-color: #f5f5f5;
+      color: #666;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      font-size: 12px;
+      text-align: center;
+      font-style: italic;
+    }
+    .mode-selector {
+      display: flex;
+      background-color: #f5f5f5;
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .mode-btn {
+      background-color: transparent;
+      color: #666;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
       cursor: pointer;
-      transition: background-color 0.3s;
+      font-size: 12px;
+      transition: all 0.2s;
+      font-weight: 500;
     }
-    .toggle-switch.active {
-      background-color: #4CAF50;
+    .mode-btn:hover {
+      background-color: #e0e0e0;
+      color: #333;
     }
-    .toggle-slider {
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 16px;
-      height: 16px;
-      background-color: white;
-      border-radius: 50%;
-      transition: transform 0.3s;
+    .mode-btn.active {
+      background-color: #4285f4;
+      color: white;
     }
-    .toggle-switch.active .toggle-slider {
-      transform: translateX(20px);
+    .mode-btn.active:hover {
+      background-color: #3367d6;
+    }
+    .response-view-mode {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      background-color: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow-y: auto;
+    }
+    .web-view.webonly {
+      flex: 1;
+      width: 100%;
+    }
+    .response-view-mode.webonly-hidden {
+      display: none;
     }
   </style>
 </head>
@@ -638,25 +912,31 @@
   <div class="container">
     <div class="controls">
       <div class="nav-buttons">
-        <button id="file-btn">📁 Select Excel File</button>
-        <button id="download-sample-btn">📥 Download Sample Excel</button>
-        <button id="prev-btn" disabled>← Previous</button>
+        <button id="file-btn">Select Excel</button>
+        <button id="download-sample-btn">Download Sample</button>
+        <div class="mode-selector" id="mode-selector">
+          <button id="web-mode-btn" class="mode-btn active">🌐 Web</button>
+          <button id="response-mode-btn" class="mode-btn">📄 Response</button>
+          <button id="webonly-mode-btn" class="mode-btn">Web Only</button>
+        </div>
+        <button id="prev-btn" disabled>← Prev</button>
         <button id="next-btn" disabled>Next →</button>
-        <button id="reload-btn" disabled>🔄 Reload</button>
+        <button id="reload-btn" disabled>Reload</button>
+        <button id="refresh-btn" disabled>Refresh</button>
       </div>
       <div class="score-buttons">
-        <button id="pass-btn" class="score-button pass" disabled>✅ Pass (↑)</button>
-        <button id="fail-btn" class="score-button fail" disabled>❌ Fail (↓)</button>
+        <button id="pass-btn" class="score-button pass" disabled>✅ Pass</button>
+        <button id="fail-btn" class="score-button fail" disabled>❌ Fail</button>
         <button id="screenshot-btn" class="screenshot-top" disabled>📸 Screenshot</button>
       </div>
       <div class="action-buttons">
         <button id="save-btn" disabled>💾 Save</button>
-        <button id="open-external-btn" disabled>🔗 Open in Browser</button>
+        <button id="open-external-btn" disabled>🔗 External</button>
       </div>
     </div>
     
     <div class="content">
-      <div class="web-view">
+      <div class="web-view" id="web-view">
         <div class="progress-bar">
           <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
         </div>
@@ -671,7 +951,22 @@
         </div>
       </div>
       
-      <div class="sidebar">
+      <div class="response-view-mode hidden" id="response-view-mode">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill-response" style="width: 0%"></div>
+        </div>
+        <div class="response-full-content">
+          <div id="response-main-display">
+            <div style="text-align: center; color: #666; padding: 40px;">
+              <div style="font-size: 48px; margin-bottom: 20px;">📄</div>
+              <div style="font-size: 18px; margin-bottom: 10px;">Select Response View mode to see parsed content</div>
+              <div style="font-size: 14px; color: #999;">Response data will be displayed here</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="sidebar" id="sidebar">
         <div class="info-panel">
           <h3>📋 Page Information</h3>
           <p><strong>Progress:</strong> <span id="page-counter">-</span></p>
@@ -686,22 +981,28 @@
           </div>
         </div>
         
-        <div class="progress-overview-panel">
-          <h3>📊 Progress Overview</h3>
-          <div class="progress-stats">
-            <span class="stat-item">✅ <span id="pass-count">0</span></span>
-            <span class="stat-item">❌ <span id="fail-count">0</span></span>
-            <span class="stat-item">⏸️ <span id="pending-count">0</span></span>
-            <span class="stat-item">📋 <span id="total-count">0</span></span>
-          </div>
-          <div class="progress-grid" id="progress-grid">
-            <!-- 进度方块将通过JavaScript动态生成 -->
-          </div>
-          <div class="progress-legend">
-            <span class="legend-item"><span class="legend-color pass"></span>Pass</span>
-            <span class="legend-item"><span class="legend-color fail"></span>Fail</span>
-            <span class="legend-item"><span class="legend-color pending"></span>Pending</span>
-            <span class="legend-item"><span class="legend-color current"></span>Current</span>
+        <div class="progress-overview-panel" id="progress-overview-panel">
+          <h3>📊 Progress Overview 
+            <button id="toggle-progress-overview" class="toggle-progress-btn" title="Toggle Progress Overview">−</button>
+          </h3>
+          <div class="progress-content" id="progress-content">
+            <div class="progress-stats">
+              <span class="stat-item">✅ <span id="pass-count">0</span></span>
+              <span class="stat-item">❌ <span id="fail-count">0</span></span>
+              <span class="stat-item">⏸️ <span id="pending-count">0</span></span>
+              <span class="stat-item">📋 <span id="total-count">0</span></span>
+            </div>
+            <div class="progress-grid-container">
+              <div class="progress-grid" id="progress-grid">
+                <!-- 进度方块将通过JavaScript动态生成 -->
+              </div>
+            </div>
+            <div class="progress-legend">
+              <span class="legend-item"><span class="legend-color pass"></span>Pass</span>
+              <span class="legend-item"><span class="legend-color fail"></span>Fail</span>
+              <span class="legend-item"><span class="legend-color pending"></span>Pending</span>
+              <span class="legend-item"><span class="legend-color current"></span>Current</span>
+            </div>
           </div>
         </div>
         
@@ -743,6 +1044,36 @@
           </div>
         </div>
         
+        <div class="response-panel" id="response-panel">
+          <h3>🔍 Response Content 
+            <button id="toggle-response" class="toggle-response-btn" title="Toggle Response Content">−</button>
+          </h3>
+          <div class="response-content" id="response-content">
+            <div class="response-tabs">
+              <div class="response-tab active" data-tab="content">Content</div>
+              <div class="response-tab" data-tab="urls">URLs</div>
+              <div class="response-tab" data-tab="images">Images</div>
+              <div class="response-tab" data-tab="questions">Related</div>
+            </div>
+            
+            <div class="response-tab-content active" id="response-content-tab">
+              <div class="response-no-data">No response data available</div>
+            </div>
+            
+            <div class="response-tab-content" id="response-urls-tab">
+              <div class="response-no-data">No URLs available</div>
+            </div>
+            
+            <div class="response-tab-content" id="response-images-tab">
+              <div class="response-no-data">No images available</div>
+            </div>
+            
+            <div class="response-tab-content" id="response-questions-tab">
+              <div class="response-no-data">No related questions available</div>
+            </div>
+          </div>
+        </div>
+        
         <div class="settings-panel">
           <h3>⚙️ Settings</h3>
           
@@ -760,6 +1091,14 @@
               <div class="toggle-slider"></div>
             </div>
             <label class="toggle-label">Auto-fail when Issue added</label>
+          </div>
+          
+          <!-- Auto-advance after fail setting -->
+          <div class="toggle-container">
+            <div class="toggle-switch" id="auto-next-fail-toggle">
+              <div class="toggle-slider"></div>
+            </div>
+            <label class="toggle-label">Auto-advance after Fail</label>
           </div>
           
           <!-- Preload count setting -->
@@ -870,6 +1209,13 @@
     // DOM elements
     const fileBtn = document.getElementById('file-btn');
     const downloadSampleBtn = document.getElementById('download-sample-btn');
+    const webModeBtn = document.getElementById('web-mode-btn');
+    const responseModeBtn = document.getElementById('response-mode-btn');
+    const webonlyModeBtn = document.getElementById('webonly-mode-btn');
+    const webView = document.getElementById('web-view');
+    const responseViewMode = document.getElementById('response-view-mode');
+    const responseMainDisplay = document.getElementById('response-main-display');
+    const progressFillResponse = document.getElementById('progress-fill-response');
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
     const passBtn = document.getElementById('pass-btn');
@@ -877,6 +1223,7 @@
     const screenshotBtn = document.getElementById('screenshot-btn');
     const saveBtn = document.getElementById('save-btn');
     const reloadBtn = document.getElementById('reload-btn');
+    const refreshBtn = document.getElementById('refresh-btn');
     const openExternalBtn = document.getElementById('open-external-btn');
     const webFrame = document.getElementById('web-frame');
     const pageCounterEl = document.getElementById('page-counter');
@@ -892,6 +1239,7 @@
     const thumbnailPlaceholder = document.getElementById('thumbnail-placeholder');
     const autoNextToggle = document.getElementById('auto-next-toggle');
     const autoFailToggle = document.getElementById('auto-fail-toggle');
+    const autoNextFailToggle = document.getElementById('auto-next-fail-toggle');
     const preloadStatusEl = document.getElementById('preload-status');
     const preloadCountSelect = document.getElementById('preload-count');
     const pageJumpInput = document.getElementById('page-jump');
@@ -917,6 +1265,22 @@
     const failCountEl = document.getElementById('fail-count');
     const pendingCountEl = document.getElementById('pending-count');
     const totalCountEl = document.getElementById('total-count');
+    const toggleProgressOverviewBtn = document.getElementById('toggle-progress-overview');
+    const progressContent = document.getElementById('progress-content');
+    
+    // Response panel elements
+    const toggleResponseBtn = document.getElementById('toggle-response');
+    const responseContent = document.getElementById('response-content');
+    const responseTabs = document.querySelectorAll('.response-tab');
+    const responseTabContents = document.querySelectorAll('.response-tab-content');
+    const responseContentTab = document.getElementById('response-content-tab');
+    const responseUrlsTab = document.getElementById('response-urls-tab');
+    const responseImagesTab = document.getElementById('response-images-tab');
+    const responseQuestionsTab = document.getElementById('response-questions-tab');
+    const sidebar = document.getElementById('sidebar');
+    
+    // Progress Overview state
+    let progressOverviewVisible = true;
     
     // App state
     let excelData = [];
@@ -924,8 +1288,7 @@
     let columns = {};
     let autoNextEnabled = true; // 默认开启自动跳转
     let autoFailEnabled = false; // 默认关闭自动fail
-    let preloadQueue = new Set(); // 预加载队列
-    let preloadedPages = new Map(); // 预加载缓存
+    let autoNextFailEnabled = false; // 默认关闭fail后自动跳转
     let maxPreloadPages = 5; // 默认预加载5页
     let customTags = []; // 自定义标签数组
     let presetTags = []; // 预设标签数组（现在也可以编辑）
@@ -933,6 +1296,10 @@
     let customShortcuts = {}; // 自定义快捷键配置
     let recordingShortcut = null; // 当前正在录制的快捷键
     let shortcutsVisible = false; // 快捷键配置面板可见性
+    let thumbnailCache = new Map(); // 缩略图缓存
+    let responseVisible = true; // Response面板可见性
+    let currentResponseTab = 'content'; // 当前激活的response标签页
+    let displayMode = 'web'; // 显示模式：'web'、'response' 或 'webonly'
     
     // 默认预设标签
     const defaultPresetTags = [
@@ -954,6 +1321,7 @@
       'save': { keys: ['Control', 's'], description: 'Save Manually' },
       'screenshot': { keys: ['Control', 'p'], description: 'Take Screenshot' },
       'reload': { keys: ['F5'], description: 'Reload Page' },
+      'refresh': { keys: ['Control', 'F5'], description: 'Refresh Current Page' },
       'openExternal': { keys: ['Control', 'o'], description: 'Open in Browser' },
       'clearTags': { keys: ['Control', '0'], description: 'Clear Issue Tags' },
       'toggleAutoNext': { keys: ['Control', 'a'], description: 'Toggle Auto-advance' },
@@ -962,31 +1330,57 @@
     
     // 初始化自定义快捷键系统
     function initCustomShortcuts() {
-      // 从localStorage加载自定义快捷键
-      const savedShortcuts = localStorage.getItem('customShortcuts');
-      if (savedShortcuts) {
-        try {
-          const parsed = JSON.parse(savedShortcuts);
-          customShortcuts = { ...defaultShortcuts, ...parsed };
-        } catch (e) {
-          console.error('Failed to load custom shortcuts:', e);
-          customShortcuts = { ...defaultShortcuts };
-        }
-      } else {
-        customShortcuts = { ...defaultShortcuts };
+      console.log('Initializing custom shortcuts...');
+      
+      // 检查必要的DOM元素是否存在
+      if (!shortcutsList) {
+        console.error('shortcutsList not found!');
+        return;
       }
       
+      console.log('Shortcuts DOM elements found, proceeding with initialization...');
+      
+      // 首先设置默认快捷键
+      customShortcuts = { ...defaultShortcuts };
+      console.log('Default shortcuts set:', customShortcuts);
+      
+      // 从localStorage加载自定义快捷键
+      const savedShortcuts = localStorage.getItem('customShortcuts');
+      console.log('Saved shortcuts:', savedShortcuts);
+      
+      if (savedShortcuts) {
+        try {
+          const loadedShortcuts = JSON.parse(savedShortcuts);
+          // 合并保存的快捷键和默认快捷键
+          Object.assign(customShortcuts, loadedShortcuts);
+          console.log('Loaded custom shortcuts from storage:', customShortcuts);
+        } catch (e) {
+          console.error('Failed to load custom shortcuts:', e);
+        }
+      }
+      
+      // 渲染快捷键列表
+      console.log('About to render shortcuts list...');
       renderShortcutsList();
-      updateShortcutsInfo();
+      console.log('Custom shortcuts initialization completed');
     }
     
     // 渲染快捷键列表
     function renderShortcutsList() {
-      if (!shortcutsList) return;
+      console.log('Rendering shortcuts list...');
+      
+      if (!shortcutsList) {
+        console.error('shortcutsList is null, cannot render shortcuts');
+        return;
+      }
+      
+      console.log('shortcutsList found, proceeding with shortcuts rendering...');
+      console.log('customShortcuts:', customShortcuts);
       
       shortcutsList.innerHTML = '';
       
       Object.entries(customShortcuts).forEach(([action, config]) => {
+        console.log(`Rendering shortcut for action: ${action}`, config);
         const item = document.createElement('div');
         item.className = 'shortcut-item';
         
@@ -1005,7 +1399,10 @@
         item.appendChild(label);
         item.appendChild(keyDisplay);
         shortcutsList.appendChild(item);
+        console.log(`Added shortcut item for ${action}`);
       });
+      
+      console.log('Shortcuts list rendering completed');
     }
     
     // 格式化快捷键显示
@@ -1124,43 +1521,90 @@
     
     // 初始化标签系统
     function initTagSystem() {
+      console.log('Initializing tag system...');
+      
+      // 检查必要的DOM元素是否存在
+      if (!presetTagsContainer) {
+        console.error('presetTagsContainer not found!');
+        return;
+      }
+      if (!addTagBtn) {
+        console.error('addTagBtn not found!');
+        return;
+      }
+      
+      console.log('DOM elements found, proceeding with tag system initialization...');
+      
       // 从localStorage加载预设标签
       const savedPresetTags = localStorage.getItem('presetTags');
+      console.log('Saved preset tags:', savedPresetTags);
+      
       if (savedPresetTags) {
         try {
           presetTags = JSON.parse(savedPresetTags);
+          console.log('Loaded preset tags from storage:', presetTags);
         } catch (e) {
           console.error('Failed to load preset tags:', e);
           presetTags = [...defaultPresetTags];
+          console.log('Using default preset tags:', presetTags);
         }
       } else {
         presetTags = [...defaultPresetTags];
+        console.log('No saved preset tags, using defaults:', presetTags);
+        // 立即保存默认标签到 localStorage
+        savePresetTags();
       }
       
       // 从localStorage加载自定义标签
       const savedCustomTags = localStorage.getItem('customTags');
+      console.log('Saved custom tags:', savedCustomTags);
+      
       if (savedCustomTags) {
         try {
           customTags = JSON.parse(savedCustomTags);
+          console.log('Loaded custom tags from storage:', customTags);
         } catch (e) {
           console.error('Failed to load custom tags:', e);
           customTags = [];
         }
       }
       
+      // 渲染所有标签
+      console.log('About to render all tags...');
       renderAllTags();
+      console.log('Tag system initialization completed');
     }
     
     // 渲染所有标签
     function renderAllTags() {
+      console.log('Rendering all tags...');
+      console.log('Preset tags to render:', presetTags);
+      console.log('Custom tags to render:', customTags);
+      
+      // 检查必要的DOM元素
+      if (!presetTagsContainer) {
+        console.error('presetTagsContainer is null, cannot render tags');
+        return;
+      }
+      if (!addTagBtn) {
+        console.error('addTagBtn is null, cannot render tags');
+        return;
+      }
+      
       // 清空容器（但保留Add Tag按钮）
       const existingTags = presetTagsContainer.querySelectorAll('.preset-tag');
+      console.log('Removing existing tags:', existingTags.length);
       existingTags.forEach(tag => tag.remove());
       
       // 渲染预设标签
       presetTags.forEach((tagText, index) => {
         const tag = createTagElement(tagText, index + 1, 'preset');
-        presetTagsContainer.insertBefore(tag, addTagBtn);
+        if (tag) {
+          presetTagsContainer.insertBefore(tag, addTagBtn);
+          console.log(`Rendered preset tag ${index + 1}: ${tagText}`);
+        } else {
+          console.error(`Failed to create preset tag: ${tagText}`);
+        }
       });
       
       // 渲染自定义标签
@@ -1168,12 +1612,16 @@
         const shortcut = presetTags.length + index + 1;
         if (shortcut <= 9) { // 只有前9个标签支持快捷键
           const tag = createTagElement(tagText, shortcut, 'custom');
-          presetTagsContainer.insertBefore(tag, addTagBtn);
-        } else {
-          const tag = createTagElement(tagText, null, 'custom');
-          presetTagsContainer.insertBefore(tag, addTagBtn);
+          if (tag) {
+            presetTagsContainer.insertBefore(tag, addTagBtn);
+            console.log(`Rendered custom tag ${shortcut}: ${tagText}`);
+          } else {
+            console.error(`Failed to create custom tag: ${tagText}`);
+          }
         }
       });
+      
+      console.log('All tags rendered successfully');
     }
     
     // 创建标签元素
@@ -1332,76 +1780,33 @@
     }
     
     // 预加载逻辑
-    function startPreloading() {
-      // 清空之前的预加载
-      preloadQueue.clear();
-      preloadedPages.clear();
-      
-      // 预加载当前页面后的页面
-      preloadNextPages();
-    }
-    
-    function preloadNextPages() {
-      if (!excelData || excelData.length <= 1 || maxPreloadPages === 0) {
-        updatePreloadStatus('Preloading disabled');
-        return;
-      }
-      
-      let preloadCount = 0;
-      const dataLength = excelData.length; // 包含标题行的总长度
-      const maxDataIndex = dataLength - 1; // 最后一行数据的索引
-      
-      for (let i = currentIndex + 1; i <= Math.min(currentIndex + maxPreloadPages, maxDataIndex); i++) {
-        if (!preloadedPages.has(i) && !preloadQueue.has(i)) {
-          // 检查这一行是否有有效的URL
-          const rowData = excelData[i];
-          const url = rowData && rowData[columns.link];
-          if (url && url.trim() && url.startsWith('http')) {
-            preloadQueue.add(i);
-            preloadCount++;
-          }
-        }
-      }
-      
-      if (preloadCount > 0) {
-        updatePreloadStatus(`Preloading ${preloadCount} pages...`);
-        processPreloadQueue();
-      } else {
-        updatePreloadStatus(`${preloadedPages.size} pages preloaded`);
-      }
-    }
-    
-    async function processPreloadQueue() {
-      if (preloadQueue.size === 0) return;
-      
-      const pageIndex = preloadQueue.values().next().value;
-      preloadQueue.delete(pageIndex);
+    // Auto-preload around current page
+    async function preloadAroundCurrentPage() {
+      if (!excelData || excelData.length <= 1) return;
       
       try {
-        const rowData = excelData[pageIndex];
-        const url = rowData && rowData[columns.link];
+        const maxPreloadPages = parseInt(preloadCountSelect.value) || 0;
+        if (maxPreloadPages === 0) {
+          updatePreloadStatus('0 pages preloaded (disabled)');
+          return;
+        }
         
-        if (url && url.trim() && url.startsWith('http')) {
-          // 在后台预加载URL
-          const result = await ipcRenderer.invoke('preload-url', url);
-          if (result.success) {
-            preloadedPages.set(pageIndex, {
-              url: url,
-              loaded: true,
-              timestamp: Date.now()
-            });
-            console.log(`Successfully preloaded page ${pageIndex}: ${url}`);
-          }
+        const result = await ipcRenderer.invoke('dynamic-preload', {
+          currentIndex: currentIndex,
+          totalPages: excelData.length - 1,
+          maxPreloadPages: maxPreloadPages,
+          excelData: excelData,
+          columns: columns
+        });
+        
+        if (result.success) {
+          updatePreloadStatus(`${result.preloadCount || result.cachedCount || 0} pages preloaded`);
+        } else {
+          updatePreloadStatus('Preload failed');
         }
       } catch (error) {
-        console.log(`Preload failed for page ${pageIndex}:`, error);
-      }
-      
-      // 继续处理队列中的下一个
-      if (preloadQueue.size > 0) {
-        setTimeout(() => processPreloadQueue(), 200); // 增加间隔到200ms减少卡顿
-      } else {
-        updatePreloadStatus(`${preloadedPages.size} pages preloaded`);
+        console.log('Preload error:', error);
+        updatePreloadStatus('Preload error');
       }
     }
     
@@ -1410,7 +1815,7 @@
     }
     
     // Load specific page
-    function loadPage(index) {
+    async function loadPage(index) {
       if (!excelData || excelData.length <= 1) return;
       
       // Auto-save previous page when navigating
@@ -1446,12 +1851,63 @@
       
       // Load URL
       const url = rowData[columns.link];
-      if (url) {
-        currentUrlEl.textContent = url;
-        currentUrlEl.href = url;
+      currentUrlEl.textContent = url || '-';
+      currentUrlEl.href = url || '#';
+      
+      if (url && url.trim() && url.startsWith('http') && displayMode !== 'response') {
+        // 只在非response模式下加载BrowserView
+        // 获取webFrame的准确位置
+        const rect = webFrame.getBoundingClientRect();
+        const targetBounds = {
+          x: Math.round(rect.left),
+          y: Math.round(rect.top),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height)
+        };
+        
+        // 首先尝试切换到预加载的BrowserView，传递准确的bounds
+        const switchResult = await ipcRenderer.invoke('switch-to-preloaded', url, targetBounds);
+        
+        if (switchResult.success && switchResult.preloaded) {
+          // 成功切换到预加载页面，无动效
+          updateStatus(`⚡ Loaded: ${url} (instant from cache)`);
+          webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #4285f4;"><div style="margin-bottom: 10px;">⚡ Cached website - instant loading!</div><div style="font-size: 12px; color: #666;">This page was loaded from cache and switched instantly</div></div>';
+          
+          // bounds已经在后端设置好了，不需要再次调整
+        } else {
+          // 回退到正常加载流程
+          updateStatus(`Loading: ${url}`);
+          webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">🔄 Loading website...</div>';
+          
+          // Adjust BrowserView position first
+          adjustBrowserViewPosition();
+          
+          // Use IPC to load URL in BrowserView
+          const loadResult = await ipcRenderer.invoke('load-url', url);
+          if (loadResult.success) {
+            webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #4285f4;"><div style="margin-bottom: 10px;">✅ Website loaded successfully</div><div style="font-size: 12px; color: #666;">You can see the actual website content in the embedded browser view</div></div>';
+            updateStatus('Website loaded successfully');
+          } else {
+            webFrame.innerHTML = `
+              <div style="text-align: center; padding: 20px; color: #d32f2f;">
+                <div style="margin-bottom: 15px;">⚠️ Website could not be embedded</div>
+                <div style="font-size: 12px; color: #666; margin-bottom: 15px;">
+                  This is common with some websites due to security restrictions.<br/>
+                  You can still use the "Open in Browser" button below to view it.
+                </div>
+                <div style="font-size: 11px; color: #999;">Error: ${loadResult.error}</div>
+              </div>
+            `;
+            updateStatus(`Failed to load website: ${loadResult.error}`);
+          }
+        }
+      } else if (displayMode === 'response') {
+        // Response模式下显示提示信息
+        webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">📄 Response mode - Web content is hidden</div>';
+        updateStatus('Response mode active');
       } else {
-        currentUrlEl.textContent = 'No URL available';
-        currentUrlEl.href = '#';
+        webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">📝 No valid URL available for this entry</div>';
+        updateStatus('No valid URL available');
       }
       
       // Load score data
@@ -1494,18 +1950,18 @@
             if (result.success) {
               const imgSrc = `data:image/png;base64,${result.data}`;
               screenshotPreview.src = imgSrc;
-              screenshotPreview.classList.remove('hidden');
+        screenshotPreview.classList.remove('hidden');
               noScreenshotDiv.style.display = 'none';
               screenshotPreview.onclick = () => {
                 const newWindow = window.open();
                 newWindow.document.write(`<img src="${imgSrc}" style="max-width: 100%; max-height: 100vh; object-fit: contain;">`);
               };
-            } else {
-              screenshotPreview.classList.add('hidden');
+      } else {
+        screenshotPreview.classList.add('hidden');
               noScreenshotDiv.style.display = 'flex';
             }
           });
-        } else {
+      } else {
           // Legacy base64 without data prefix
           const imgSrc = `data:image/png;base64,${screenshotData}`;
           screenshotPreview.src = imgSrc;
@@ -1526,66 +1982,34 @@
       const issueData = rowData[columns.issue] || '';
       issueInput.value = issueData;
       
-      // Load URL in webview
-      if (url && url.trim() && url.startsWith('http')) {
-        // 检查是否已预加载
-        if (preloadedPages.has(currentIndex)) {
-          updateStatus(`Loading: ${url} (preloaded)`);
-          webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #4285f4;"><div style="margin-bottom: 10px;">⚡ Preloaded website loaded instantly</div><div style="font-size: 12px; color: #666;">You can see the actual website content in the embedded browser view</div></div>';
-        } else {
-          updateStatus(`Loading: ${url}`);
-          webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">🔄 Loading website...</div>';
-        }
-        
-        // Adjust BrowserView position first
-        adjustBrowserViewPosition();
-        
-        // Use IPC to load URL in BrowserView
-        ipcRenderer.invoke('load-url', url).then(result => {
-          if (result.success) {
-            webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #4285f4;"><div style="margin-bottom: 10px;">✅ Website loaded in the view above</div><div style="font-size: 12px; color: #666;">You can see the actual website content in the embedded browser view</div></div>';
-            updateStatus('Website loaded successfully');
-          } else {
-            webFrame.innerHTML = `
-              <div style="text-align: center; padding: 20px; color: #d32f2f;">
-                <div style="margin-bottom: 15px;">⚠️ Website could not be embedded</div>
-                <div style="font-size: 12px; color: #666; margin-bottom: 15px;">
-                  This is common with some websites due to security restrictions.<br/>
-                  You can still use the "Open in Browser" button below to view it.
-                </div>
-                <div style="font-size: 11px; color: #999;">Error: ${result.error}</div>
-              </div>
-            `;
-            updateStatus(`Failed to load website: ${result.error}`);
-          }
-        }).catch(error => {
-          webFrame.innerHTML = `
-            <div style="text-align: center; padding: 20px; color: #d32f2f;">
-              <div style="margin-bottom: 15px;">❌ Loading Error</div>
-              <div style="font-size: 12px; color: #666; margin-bottom: 15px;">
-                There was an error loading this website.<br/>
-                You can still score it and use "Open in Browser" to view it externally.
-              </div>
-              <div style="font-size: 11px; color: #999;">Error: ${error.message}</div>
-            </div>
-          `;
-          updateStatus(`Error loading website: ${error.message}`);
-        });
-      } else {
-        webFrame.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">📝 No valid URL available for this entry</div>';
-        updateStatus('No valid URL available');
-      }
-      
-      // 触发下一批预加载
-      preloadNextPages();
+      // 触发动态预加载
+      preloadAroundCurrentPage();
       
       // 更新Progress Overview
       updateProgressOverview();
+      
+      // 更新Response面板
+      updateResponsePanel();
+      
+      // 根据当前显示模式更新内容
+      if (displayMode === 'response') {
+        updateResponseViewMode();
+      } else if (displayMode === 'web') {
+        updateResponsePanel(); // 更新侧边栏的response内容  
+        updateResponseViewMode(); // 更新右侧主显示区域的response内容
+      } else if (displayMode === 'webonly') {
+        updateResponsePanel(); // 更新侧边栏的response内容
+      }
     }
     
     // Event listeners
     prevBtn.addEventListener('click', () => loadPage(currentIndex - 1));
     nextBtn.addEventListener('click', () => loadPage(currentIndex + 1));
+    
+    // 显示模式切换事件监听器
+    webModeBtn.addEventListener('click', () => switchDisplayMode('web'));
+    responseModeBtn.addEventListener('click', () => switchDisplayMode('response'));
+    webonlyModeBtn.addEventListener('click', () => switchDisplayMode('webonly'));
     
     // 修改Pass按钮行为，支持自动跳转
     passBtn.addEventListener('click', () => {
@@ -1619,6 +2043,13 @@
       
       // 更新Progress Overview
       updateProgressOverview();
+      
+      // 自动跳转到下一页（如果开启了自动跳转失败）
+      if (autoNextFailEnabled && currentIndex < excelData.length - 1) {
+        setTimeout(async () => {
+          await loadPage(currentIndex + 1);
+        }, 300); // 300ms延迟让用户看到反馈
+      }
     });
     
     screenshotBtn.addEventListener('click', async () => {
@@ -1664,6 +2095,26 @@
     
     reloadBtn.addEventListener('click', () => loadExcelData());
     
+    refreshBtn.addEventListener('click', async () => {
+      try {
+        updateStatus('Refreshing current page...');
+        const url = excelData[currentIndex] && excelData[currentIndex][columns.link];
+        if (url && url.trim() && url.startsWith('http')) {
+          // 强制重新加载当前URL
+          const result = await ipcRenderer.invoke('refresh-current-page', url);
+          if (result.success) {
+            updateStatus('✅ Page refreshed successfully');
+          } else {
+            updateStatus(`Failed to refresh page: ${result.error}`);
+          }
+        } else {
+          updateStatus('No valid URL to refresh');
+        }
+      } catch (error) {
+        showError(`Refresh failed: ${error.message}`);
+      }
+    });
+    
     openExternalBtn.addEventListener('click', () => {
       const url = excelData[currentIndex] && excelData[currentIndex][columns.link];
       if (url) {
@@ -1680,7 +2131,7 @@
         updateStatus('Issue note updated');
         
         // 检查自动fail功能
-        if (autoFailEnabled) {
+      if (autoFailEnabled) {
           const issueText = e.target.value.trim();
           if (issueText && excelData[currentIndex][columns.result] !== 0) {
             // 有issue内容且当前不是fail状态，自动设为fail
@@ -1692,6 +2143,13 @@
             
             // 更新Progress Overview
             updateProgressOverview();
+            
+            // 自动跳转到下一页（如果开启了自动跳转失败）
+            if (autoNextFailEnabled && currentIndex < excelData.length - 1) {
+              setTimeout(async () => {
+                await loadPage(currentIndex + 1);
+              }, 300); // 300ms延迟让用户看到反馈
+            }
           }
         }
         
@@ -1734,7 +2192,7 @@
             statusEl.style.backgroundColor = originalBg;
             statusEl.style.color = originalColor;
           }, 2000);
-        } catch (error) {
+      } catch (error) {
           console.error('Auto-save failed:', error);
           // 不显示错误给用户，因为这是自动保存
         }
@@ -1746,14 +2204,61 @@
     
     // 初始化应用
     function initApp() {
+      console.log('=== Starting App Initialization ===');
+      
+      // 检查关键DOM元素是否存在
+      const criticalElements = {
+        'presetTagsContainer': presetTagsContainer,
+        'addTagBtn': addTagBtn,
+        'shortcutsList': shortcutsList,
+        'webModeBtn': webModeBtn,
+        'responseModeBtn': responseModeBtn,
+        'webonlyModeBtn': webonlyModeBtn
+      };
+      
+      console.log('DOM Elements Check:');
+      let allElementsFound = true;
+      for (const [name, element] of Object.entries(criticalElements)) {
+        const found = element !== null;
+        console.log(`  ${name}: ${found ? '✅ Found' : '❌ Missing'}`);
+        if (!found) allElementsFound = false;
+      }
+      
+      if (!allElementsFound) {
+        console.error('Some critical DOM elements are missing! Initialization may fail.');
+        // 延迟重试
+        setTimeout(() => {
+          console.log('Retrying initialization...');
+          initApp();
+        }, 100);
+        return;
+      }
+      
+      console.log('All critical DOM elements found, proceeding with initialization...');
+      
       // 初始化开关状态
       autoNextToggle.classList.add('active');
       
+      // 初始化显示模式
+      displayMode = 'web'; // 默认为web模式
+      webModeBtn.classList.add('active');
+      responseModeBtn.classList.remove('active');
+      webonlyModeBtn.classList.remove('active');
+      webView.classList.remove('hidden', 'webonly');
+      responseViewMode.classList.add('hidden');
+      
+      // 初始化时隐藏BrowserView
+      hideBrowserView();
+      
       // 初始化标签功能
+      console.log('Initializing tag system...');
       initTagSystem();
       
       // 初始化自定义快捷键功能
+      console.log('Initializing custom shortcuts...');
       initCustomShortcuts();
+      
+      console.log('=== App Initialization Completed ===');
     }
     
     // 页面加载完成后初始化
@@ -1828,6 +2333,13 @@
           
           // 更新Progress Overview
           updateProgressOverview();
+          
+          // 自动跳转到下一页（如果开启了自动跳转失败）
+          if (autoNextFailEnabled && currentIndex < excelData.length - 1) {
+            setTimeout(async () => {
+              await loadPage(currentIndex + 1);
+            }, 300); // 300ms延迟让用户看到反馈
+          }
         }
         
         autoSave();
@@ -1844,17 +2356,24 @@
     }
     
     // 自动跳转开关事件
-    autoNextToggle.addEventListener('click', () => {
-      autoNextEnabled = !autoNextEnabled;
-      autoNextToggle.classList.toggle('active', autoNextEnabled);
+      autoNextToggle.addEventListener('click', () => {
+        autoNextEnabled = !autoNextEnabled;
+        autoNextToggle.classList.toggle('active', autoNextEnabled);
       updateStatus(autoNextEnabled ? 'Auto-advance enabled' : 'Auto-advance disabled');
+      });
+      
+    // 自动Fail开关事件
+      autoFailToggle.addEventListener('click', () => {
+        autoFailEnabled = !autoFailEnabled;
+        autoFailToggle.classList.toggle('active', autoFailEnabled);
+      updateStatus(autoFailEnabled ? 'Auto-fail on issue enabled' : 'Auto-fail on issue disabled');
     });
     
-    // 自动Fail开关事件
-    autoFailToggle.addEventListener('click', () => {
-      autoFailEnabled = !autoFailEnabled;
-      autoFailToggle.classList.toggle('active', autoFailEnabled);
-      updateStatus(autoFailEnabled ? 'Auto-fail on issue enabled' : 'Auto-fail on issue disabled');
+    // 自动Fail后跳转开关事件
+    autoNextFailToggle.addEventListener('click', () => {
+      autoNextFailEnabled = !autoNextFailEnabled;
+      autoNextFailToggle.classList.toggle('active', autoNextFailEnabled);
+      updateStatus(autoNextFailEnabled ? 'Auto-advance after fail enabled' : 'Auto-advance after fail disabled');
     });
     
     // 预加载页数设置事件
@@ -1864,7 +2383,7 @@
       
       // 重新开始预加载
       if (excelData && excelData.length > 1) {
-        startPreloading();
+        preloadAroundCurrentPage();
       }
     });
     
@@ -1915,6 +2434,11 @@
         toggleShortcutsBtn.textContent = '⌨️ Custom Shortcuts'; // 按钮文字
         toggleShortcutsBtn.style.backgroundColor = '#6c757d'; // 灰色背景
       }
+      
+      // 初始化toggle按钮状态
+      autoNextToggle.classList.toggle('active', autoNextEnabled); // true = enabled
+      autoFailToggle.classList.toggle('active', autoFailEnabled); // false = disabled  
+      autoNextFailToggle.classList.toggle('active', autoNextFailEnabled); // false = disabled
     });
     
     // File selection
@@ -1990,6 +2514,7 @@
           screenshotBtn.disabled = false;
           saveBtn.disabled = false;
           reloadBtn.disabled = false;
+          refreshBtn.disabled = false;
           openExternalBtn.disabled = false;
           
           updateStatus(`✅ Loaded ${maxPage} pages from Excel file`);
@@ -1999,7 +2524,7 @@
           initializeProgressOverview();
           
           // 开始预加载
-          startPreloading();
+          preloadAroundCurrentPage();
         } else {
           showError(result.error || 'Failed to load Excel file');
         }
@@ -2110,13 +2635,13 @@
     }
     
     // 执行快捷键动作
-    function executeShortcutAction(action) {
+    async function executeShortcutAction(action) {
       switch (action) {
         case 'previous':
-          if (!prevBtn.disabled) loadPage(currentIndex - 1);
+          if (!prevBtn.disabled) await loadPage(currentIndex - 1);
           break;
         case 'next':
-          if (!nextBtn.disabled) loadPage(currentIndex + 1);
+          if (!nextBtn.disabled) await loadPage(currentIndex + 1);
           break;
         case 'pass':
           if (!passBtn.disabled) passBtn.click();
@@ -2132,6 +2657,9 @@
           break;
         case 'reload':
           if (!reloadBtn.disabled) reloadBtn.click();
+          break;
+        case 'refresh':
+          if (!refreshBtn.disabled) refreshBtn.click();
           break;
         case 'openExternal':
           if (!openExternalBtn.disabled) openExternalBtn.click();
@@ -2267,18 +2795,38 @@
       const totalPages = excelData.length - 1; // 排除标题行
       progressGrid.innerHTML = '';
       
-      for (let i = 1; i <= totalPages; i++) { // 从1开始，跳过标题行
-        const item = document.createElement('div');
-        item.className = 'progress-item';
-        item.dataset.pageIndex = i;
-        item.title = `Page ${i}: ${(excelData[i][columns.description] || excelData[i][columns.query] || 'No description').substring(0, 50)}...`;
+      const itemsPerRow = 15; // 每行15个方块
+      const totalRows = Math.ceil(totalPages / itemsPerRow);
+      
+      for (let row = 0; row < totalRows; row++) {
+        // 添加行号
+        const rowNumber = document.createElement('div');
+        rowNumber.className = 'progress-row-number';
+        rowNumber.textContent = (row * itemsPerRow + 1).toString();
+        rowNumber.title = `Row ${row + 1}: Pages ${row * itemsPerRow + 1}-${Math.min((row + 1) * itemsPerRow, totalPages)}`;
+        progressGrid.appendChild(rowNumber);
         
-        // 点击跳转到对应页面
-        item.addEventListener('click', () => {
-          loadPage(i);
-        });
-        
-        progressGrid.appendChild(item);
+        // 添加该行的进度方块
+        for (let col = 0; col < itemsPerRow; col++) {
+          const pageIndex = row * itemsPerRow + col + 1; // 从1开始，跳过标题行
+          if (pageIndex > totalPages) break;
+          
+          const item = document.createElement('div');
+          item.className = 'progress-item';
+          item.dataset.pageIndex = pageIndex;
+          
+          // 生成tooltip内容
+          const description = excelData[pageIndex][columns.description] || excelData[pageIndex][columns.query] || 'No description';
+          const truncatedDesc = description.length > 40 ? description.substring(0, 40) + '...' : description;
+          item.title = `Page ${pageIndex}: ${truncatedDesc}`;
+          
+          // 点击跳转到对应页面
+          item.addEventListener('click', () => {
+            loadPage(pageIndex);
+          });
+          
+          progressGrid.appendChild(item);
+        }
       }
     }
     
@@ -2307,9 +2855,9 @@
       
       // 更新网格显示
       const items = progressGrid.querySelectorAll('.progress-item');
-      items.forEach((item, index) => {
-        const pageIndex = index + 1; // 对应实际的页面索引
-        const result = excelData[pageIndex][columns.result];
+      items.forEach((item) => {
+        const pageIndex = parseInt(item.dataset.pageIndex); // 使用存储的页面索引
+        const result = excelData[pageIndex] ? excelData[pageIndex][columns.result] : null;
         
         // 移除所有状态类
         item.classList.remove('pass', 'fail', 'pending', 'current');
@@ -2332,6 +2880,559 @@
       failCountEl.textContent = failCount;
       pendingCountEl.textContent = pendingCount;
       totalCountEl.textContent = totalCount;
+    }
+    
+    // Progress Overview toggle
+    toggleProgressOverviewBtn.addEventListener('click', () => {
+      progressOverviewVisible = !progressOverviewVisible;
+      progressContent.style.display = progressOverviewVisible ? 'block' : 'none';
+      toggleProgressOverviewBtn.textContent = progressOverviewVisible ? '📊' : '📊';
+    });
+    
+    // Response panel toggle
+    toggleResponseBtn.addEventListener('click', () => {
+      responseVisible = !responseVisible;
+      responseContent.style.display = responseVisible ? 'block' : 'none';
+      toggleResponseBtn.textContent = responseVisible ? '−' : '+';
+    });
+    
+    // Response tab switching
+    responseTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetTab = tab.dataset.tab;
+        
+        // Update active tab
+        responseTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Update active content
+        responseTabContents.forEach(content => {
+          content.classList.remove('active');
+        });
+        
+        const targetContent = document.getElementById(`response-${targetTab}-tab`);
+        if (targetContent) {
+          targetContent.classList.add('active');
+        }
+        
+        currentResponseTab = targetTab;
+      });
+    });
+    
+    // Response标签页切换事件
+    if (responseTabs) {
+      responseTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const targetTab = tab.dataset.tab;
+          
+          // 更新标签状态
+          responseTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          // 更新内容显示
+          responseTabContents.forEach(content => content.classList.remove('active'));
+          const targetContent = document.getElementById(`response-${targetTab}-tab`);
+          if (targetContent) {
+            targetContent.classList.add('active');
+          }
+          
+          currentResponseTab = targetTab;
+        });
+      });
+    }
+    
+    // 缩略图预加载函数
+    function preloadThumbnails() {
+      if (!excelData || excelData.length <= 1) return;
+      
+      const totalPages = excelData.length - 1;
+      const preloadRange = 5; // 预加载前后5页的缩略图
+      
+      // 计算预加载范围
+      const startIndex = Math.max(1, currentIndex - preloadRange);
+      const endIndex = Math.min(totalPages, currentIndex + preloadRange);
+      
+      for (let i = startIndex; i <= endIndex; i++) {
+        if (i === currentIndex) continue; // 跳过当前页面
+        
+        const rowData = excelData[i];
+        const thumbnailUrl = rowData && rowData[columns.thumbnail_link];
+        
+        if (thumbnailUrl && !thumbnailCache.has(thumbnailUrl)) {
+          // 预加载缩略图
+          const img = new Image();
+          img.onload = () => {
+            thumbnailCache.set(thumbnailUrl, img);
+          };
+          img.onerror = () => {
+            // 预加载失败，不做处理
+          };
+          img.src = thumbnailUrl;
+        }
+      }
+      
+      // 清理过期的缓存（保留最近20个）
+      if (thumbnailCache.size > 20) {
+        const entries = Array.from(thumbnailCache.entries());
+        const toRemove = entries.slice(0, thumbnailCache.size - 20);
+        toRemove.forEach(([url]) => thumbnailCache.delete(url));
+      }
+    }
+    
+    // Response处理函数
+    function parseResponseData(responseString) {
+      if (!responseString || responseString.trim() === '') {
+        return null;
+      }
+      
+      try {
+        return JSON.parse(responseString);
+      } catch (e) {
+        console.error('Error parsing response JSON:', e);
+        return { error: 'Failed to parse response data', original: responseString };
+      }
+    }
+    
+    function updateResponsePanel() {
+      if (!excelData || !excelData[currentIndex]) {
+        clearResponsePanel();
+        return;
+      }
+      
+      const rowData = excelData[currentIndex];
+      const responseString = rowData[columns.response];
+      const responseData = parseResponseData(responseString);
+      
+      if (!responseData) {
+        clearResponsePanel();
+        return;
+      }
+      
+      // 更新各个标签页的内容
+      updateResponseContent(responseData);
+      updateResponseUrls(responseData);
+      updateResponseImages(responseData);
+      updateResponseQuestions(responseData);
+    }
+    
+    function clearResponsePanel() {
+      if (responseContentTab) {
+        responseContentTab.innerHTML = '<div class="response-no-data">No response data available</div>';
+      }
+      if (responseUrlsTab) {
+        responseUrlsTab.innerHTML = '<div class="response-no-data">No URLs available</div>';
+      }
+      if (responseImagesTab) {
+        responseImagesTab.innerHTML = '<div class="response-no-data">No images available</div>';
+      }
+      if (responseQuestionsTab) {
+        responseQuestionsTab.innerHTML = '<div class="response-no-data">No related questions available</div>';
+      }
+    }
+    
+    function updateResponseContent(responseData) {
+      if (!responseContentTab) return;
+      
+      if (responseData.error) {
+        responseContentTab.innerHTML = `
+          <div class="response-error">
+            ${responseData.error}<br>
+            <details style="margin-top: 8px;">
+              <summary>Show original data</summary>
+              <pre style="white-space: pre-wrap; font-size: 10px; margin-top: 4px;">${responseData.original}</pre>
+            </details>
+          </div>
+        `;
+        return;
+      }
+      
+      let contentHtml = '';
+      
+      if (responseData.Content) {
+        contentHtml += `<div class="response-content-section">${formatMarkdownContent(responseData.Content)}</div>`;
+      }
+      
+      if (responseData.Title) {
+        contentHtml += `<div class="response-content-section"><strong>Title:</strong><br>${escapeHtml(responseData.Title)}</div>`;
+      }
+      
+      if (responseData.ModelResponseMessage) {
+        contentHtml += `<div class="response-content-section"><strong>Model Response:</strong><br>${escapeHtml(responseData.ModelResponseMessage)}</div>`;
+      }
+      
+      if (responseData.ErrorMessage) {
+        contentHtml += `<div class="response-error"><strong>Error:</strong><br>${escapeHtml(responseData.ErrorMessage)}</div>`;
+      }
+      
+      if (responseData.Completed !== undefined) {
+        const status = responseData.Completed ? 'Completed' : 'Incomplete';
+        contentHtml += `<div class="response-content-section"><strong>Status:</strong> ${status}</div>`;
+      }
+      
+      responseContentTab.innerHTML = contentHtml || '<div class="response-no-data">No content available</div>';
+    }
+    
+    function updateResponseUrls(responseData) {
+      if (!responseUrlsTab) return;
+      
+      if (responseData.Urls && responseData.Urls.length > 0) {
+        const urlsHtml = `
+          <div class="response-urls">
+            <ul>
+              ${responseData.Urls.map(urlObj => {
+                const url = typeof urlObj === 'string' ? urlObj : urlObj.Url;
+                const title = typeof urlObj === 'object' && urlObj.Title ? urlObj.Title : url;
+                return `<li><a href="${escapeHtml(url)}" target="_blank" title="${escapeHtml(url)}">${escapeHtml(title)}</a></li>`;
+              }).join('')}
+            </ul>
+          </div>
+        `;
+        responseUrlsTab.innerHTML = urlsHtml;
+      } else {
+        responseUrlsTab.innerHTML = '<div class="response-no-data">No URLs available</div>';
+      }
+    }
+    
+    function updateResponseImages(responseData) {
+      if (!responseImagesTab) return;
+      
+      if (responseData.Images && responseData.Images.length > 0) {
+        const imagesHtml = `
+          <div class="response-images">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
+              ${responseData.Images.map(imageObj => {
+                const imageUrl = typeof imageObj === 'string' ? imageObj : imageObj.ThumbnailUrl || imageObj.Url;
+                const title = typeof imageObj === 'object' && imageObj.Title ? imageObj.Title : 'Response image';
+                return `
+                  <div style="background-color: #f8f9fa; border-radius: 6px; overflow: hidden; border: 1px solid #dee2e6; transition: transform 0.2s;">
+                    <img src="${escapeHtml(imageUrl)}" 
+                         alt="${escapeHtml(title)}" 
+                         style="width: 100%; height: 120px; object-fit: cover; cursor: pointer;"
+                         title="Click to view full size"
+                         onclick="showFullscreenImage('${escapeHtml(imageUrl)}')"
+                         onmouseover="this.parentElement.style.transform='scale(1.05)'"
+                         onmouseout="this.parentElement.style.transform='scale(1)'"
+                         onerror="this.parentElement.style.display='none'">
+                    ${title !== 'Response image' ? `<div style="padding: 6px; font-size: 11px; color: #666; text-align: center; border-top: 1px solid #dee2e6;">${escapeHtml(title)}</div>` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+        responseImagesTab.innerHTML = imagesHtml;
+      } else {
+        responseImagesTab.innerHTML = '<div class="response-no-data">No images available</div>';
+      }
+    }
+    
+    function updateResponseQuestions(responseData) {
+      if (!responseQuestionsTab) return;
+      
+      if (responseData.RelatedQuestions && responseData.RelatedQuestions.length > 0) {
+        const questionsHtml = `
+          <div class="response-related-questions">
+            <ul>
+              ${responseData.RelatedQuestions.map(question => `
+                <li>${escapeHtml(question)}</li>
+              `).join('')}
+            </ul>
+          </div>
+        `;
+        responseQuestionsTab.innerHTML = questionsHtml;
+      } else {
+        responseQuestionsTab.innerHTML = '<div class="response-no-data">No related questions available</div>';
+      }
+    }
+    
+    function formatMarkdownContent(content) {
+      if (typeof content !== 'string') return escapeHtml(content);
+      
+      // 简单的Markdown格式化
+      let formatted = escapeHtml(content);
+      
+      // 处理---分隔符 - 先处理，避免被后续规则影响
+      formatted = formatted.replace(/^---$/gm, '<hr style="border: none; border-top: 2px solid #e9ecef; margin: 15px 0;">');
+      
+      // 标题 (需要在换行处理之前)
+      formatted = formatted.replace(/^### (.*$)/gm, '<h4 style="margin: 12px 0 8px 0; color: #495057;">$1</h4>');
+      formatted = formatted.replace(/^## (.*$)/gm, '<h3 style="margin: 15px 0 10px 0; color: #495057;">$1</h3>');
+      formatted = formatted.replace(/^# (.*$)/gm, '<h2 style="margin: 18px 0 12px 0; color: #495057;">$1</h2>');
+      
+      // 粗体
+      formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      
+      // 处理表格 (简单处理)
+      formatted = formatted.replace(/\|(.+)\|/g, (match, content) => {
+        const cells = content.split('|').map(cell => cell.trim());
+        return '<div style="display: flex; border-bottom: 1px solid #dee2e6; margin: 4px 0;">' + 
+               cells.map(cell => `<div style="flex: 1; padding: 6px 8px; border-right: 1px solid #dee2e6;">${cell}</div>`).join('') + 
+               '</div>';
+      });
+      
+      // 换行 - 减少多余的换行
+      formatted = formatted.replace(/\n\n\n+/g, '\n\n'); // 多个连续换行合并为两个
+      formatted = formatted.replace(/\n\n/g, '<br><br>'); // 段落间距
+      formatted = formatted.replace(/\n/g, '<br>'); // 单换行
+      
+      return formatted;
+    }
+    
+    function escapeHtml(text) {
+      if (typeof text !== 'string') return text;
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    // 显示模式切换函数
+    function switchDisplayMode(mode) {
+      if (mode === displayMode) return; // 如果已经是当前模式，直接返回
+      
+      displayMode = mode;
+      
+      // 更新按钮状态
+      webModeBtn.classList.toggle('active', mode === 'web');
+      responseModeBtn.classList.toggle('active', mode === 'response');
+      webonlyModeBtn.classList.toggle('active', mode === 'webonly');
+      
+      // 切换显示内容
+      if (mode === 'web') {
+        // Web模式：显示webview和sidebar
+        webView.classList.remove('hidden', 'webonly');
+        responseViewMode.classList.add('hidden');
+        responseViewMode.classList.remove('webonly-hidden');
+        showBrowserView();
+      } else if (mode === 'response') {
+        // Response模式：隐藏webview，显示response，显示sidebar
+        webView.classList.add('hidden');
+        webView.classList.remove('webonly');
+        responseViewMode.classList.remove('hidden', 'webonly-hidden');
+        // 确保BrowserView被隐藏
+        hideBrowserView();
+        updateResponseViewMode();
+      } else if (mode === 'webonly') {
+        // WebOnly模式：只显示webview，隐藏response但保留sidebar
+        webView.classList.remove('hidden');
+        webView.classList.add('webonly');
+        responseViewMode.classList.add('hidden', 'webonly-hidden');
+        showBrowserView();
+      }
+      
+      updateStatus(`Switched to ${mode === 'web' ? 'Web' : mode === 'response' ? 'Response' : 'Web Only'} view mode`);
+    }
+    
+    function updateResponseViewMode() {
+      // 更新response模式下的进度条
+      if (progressFillResponse && excelData && excelData.length > 1) {
+        const maxIndex = excelData.length - 1;
+        const progress = maxIndex > 0 ? (currentIndex / maxIndex) * 100 : 0;
+        progressFillResponse.style.width = `${progress}%`;
+      }
+      
+      if (!excelData || !excelData[currentIndex]) {
+        responseMainDisplay.innerHTML = `
+          <div style="text-align: center; color: #666; padding: 40px;">
+            <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+            <div style="font-size: 18px; margin-bottom: 10px;">No response data available</div>
+            <div style="font-size: 14px; color: #999;">This page doesn't have response content</div>
+          </div>
+        `;
+        return;
+      }
+      
+      const rowData = excelData[currentIndex];
+      console.log('Debug - Current index:', currentIndex);
+      console.log('Debug - Row data:', rowData);
+      console.log('Debug - Columns:', columns);
+      console.log('Debug - Response column index:', columns.response);
+      
+      const responseString = rowData[columns.response];
+      console.log('Debug - Response string:', responseString);
+      console.log('Debug - Response string type:', typeof responseString);
+      
+      const responseData = parseResponseData(responseString);
+      console.log('Debug - Parsed response data:', responseData);
+      
+      if (!responseData) {
+        responseMainDisplay.innerHTML = `
+          <div style="text-align: center; color: #666; padding: 40px;">
+            <div style="font-size: 48px; margin-bottom: 20px;">📄</div>
+            <div style="font-size: 18px; margin-bottom: 10px;">No response data available</div>
+            <div style="font-size: 14px; color: #999; margin-bottom: 20px;">This page doesn't have response content</div>
+            <details style="text-align: left; background-color: #f8f9fa; padding: 15px; border-radius: 4px;">
+              <summary style="cursor: pointer; font-weight: bold;">Debug info</summary>
+              <pre style="white-space: pre-wrap; font-size: 12px; margin-top: 10px;">
+Current index: ${currentIndex}
+Response column: ${columns.response}
+Response data: ${responseString}
+Columns: ${JSON.stringify(columns, null, 2)}
+              </pre>
+            </details>
+          </div>
+        `;
+        return;
+      }
+      
+      if (responseData.error) {
+        responseMainDisplay.innerHTML = `
+          <div style="text-align: center; color: #e74c3c; padding: 40px;">
+            <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+            <div style="font-size: 18px; margin-bottom: 10px;">Error parsing response data</div>
+            <div style="font-size: 14px; color: #999; margin-bottom: 20px;">${responseData.error}</div>
+            <details style="text-align: left; background-color: #f8f9fa; padding: 15px; border-radius: 4px;">
+              <summary style="cursor: pointer; font-weight: bold;">Show original data</summary>
+              <pre style="white-space: pre-wrap; font-size: 12px; margin-top: 10px; overflow-x: auto;">${responseData.original}</pre>
+            </details>
+          </div>
+        `;
+        return;
+      }
+      
+      // 构建response内容显示
+      let contentHtml = `
+        <div style="padding: 15px; max-width: 100%; overflow-y: auto;">
+          <div style="margin-bottom: 20px;">
+            <h2 style="color: #2c3e50; margin-bottom: 12px; border-bottom: 2px solid #3498db; padding-bottom: 8px;">
+              📄 Response Content
+            </h2>
+      `;
+      
+      // 状态信息
+      if (responseData.Completed !== undefined) {
+        const status = responseData.Completed ? 'Completed ✅' : 'Incomplete ⏳';
+        const statusColor = responseData.Completed ? '#27ae60' : '#f39c12';
+        contentHtml += `
+          <div style="background-color: ${statusColor}20; border-left: 4px solid ${statusColor}; padding: 8px; margin-bottom: 10px; border-radius: 4px;">
+            <strong>Status:</strong> <span style="color: ${statusColor}; font-weight: bold;">${status}</span>
+          </div>
+        `;
+      }
+      
+      // 标题
+      if (responseData.Title) {
+        contentHtml += `
+          <div style="background-color: #f8f9fa; padding: 12px; margin-bottom: 10px; border-radius: 4px; border-left: 4px solid #007bff;">
+            <h3 style="margin: 0; color: #007bff;">📋 Title</h3>
+            <p style="margin: 8px 0 0 0; font-size: 16px; line-height: 1.6;">${escapeHtml(responseData.Title)}</p>
+          </div>
+        `;
+      }
+      
+      // 主要内容
+      if (responseData.Content) {
+        contentHtml += `
+          <div style="background-color: #ffffff; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e9ecef; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="margin: 0 0 12px 0; color: #495057;">📝 Content</h3>
+            <div style="line-height: 1.6; font-size: 14px;">${formatMarkdownContent(responseData.Content)}</div>
+          </div>
+        `;
+      }
+      
+      // URLs
+      if (responseData.Urls && responseData.Urls.length > 0) {
+        contentHtml += `
+          <div style="background-color: #ffffff; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e9ecef; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="margin: 0 0 12px 0; color: #495057;">🔗 Related URLs (${responseData.Urls.length})</h3>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              ${responseData.Urls.map(urlObj => {
+                const url = typeof urlObj === 'string' ? urlObj : urlObj.Url;
+                const title = typeof urlObj === 'object' && urlObj.Title ? urlObj.Title : url;
+                return `
+                  <li style="margin-bottom: 6px; padding: 8px; background-color: #f8f9fa; border-radius: 4px; border-left: 3px solid #007bff;">
+                    <a href="${escapeHtml(url)}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500; display: block; word-break: break-all;" 
+                       onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"
+                       title="${escapeHtml(url)}">${escapeHtml(title)}</a>
+                  </li>
+                `;
+              }).join('')}
+            </ul>
+          </div>
+        `;
+      }
+      
+      // 图片
+      if (responseData.Images && responseData.Images.length > 0) {
+        contentHtml += `
+          <div style="background-color: #ffffff; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e9ecef; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="margin: 0 0 12px 0; color: #495057;">🖼️ Images (${responseData.Images.length})</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;">
+              ${responseData.Images.map(imageObj => {
+                const imageUrl = typeof imageObj === 'string' ? imageObj : imageObj.ThumbnailUrl || imageObj.Url;
+                const title = typeof imageObj === 'object' && imageObj.Title ? imageObj.Title : 'Response image';
+                return `
+                  <div style="background-color: #f8f9fa; border-radius: 6px; overflow: hidden; border: 1px solid #dee2e6; transition: transform 0.2s;">
+                    <img src="${escapeHtml(imageUrl)}" 
+                         alt="${escapeHtml(title)}" 
+                         style="width: 100%; height: 140px; object-fit: cover; cursor: pointer;"
+                         title="Click to view full size"
+                         onclick="showFullscreenImage('${escapeHtml(imageUrl)}')"
+                         onmouseover="this.parentElement.style.transform='scale(1.05)'"
+                         onmouseout="this.parentElement.style.transform='scale(1)'"
+                         onerror="this.parentElement.style.display='none'">
+                    ${title !== 'Response image' ? `<div style="padding: 8px; font-size: 12px; color: #666; text-align: center; border-top: 1px solid #dee2e6;">${escapeHtml(title)}</div>` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+      
+      // 相关问题
+      if (responseData.RelatedQuestions && responseData.RelatedQuestions.length > 0) {
+        contentHtml += `
+          <div style="background-color: #ffffff; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e9ecef; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="margin: 0 0 12px 0; color: #495057;">❓ Related Questions (${responseData.RelatedQuestions.length})</h3>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              ${responseData.RelatedQuestions.map(question => `
+                <li style="margin-bottom: 6px; padding: 10px; background-color: #f8f9fa; border-radius: 4px; border-left: 3px solid #28a745;">
+                  <span style="color: #495057; line-height: 1.6;">${escapeHtml(question)}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        `;
+      }
+      
+      // 错误信息
+      if (responseData.ErrorMessage) {
+        contentHtml += `
+          <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 12px; margin-bottom: 10px; border-radius: 4px; border-left: 4px solid #dc3545;">
+            <h3 style="margin: 0 0 8px 0; color: #721c24;">⚠️ Error Message</h3>
+            <p style="margin: 0; color: #721c24;">${escapeHtml(responseData.ErrorMessage)}</p>
+          </div>
+        `;
+      }
+      
+      // 模型响应
+      if (responseData.ModelResponseMessage) {
+        contentHtml += `
+          <div style="background-color: #e2e3e5; border: 1px solid #d6d8db; padding: 12px; margin-bottom: 10px; border-radius: 4px; border-left: 4px solid #6c757d;">
+            <h3 style="margin: 0 0 8px 0; color: #495057;">🤖 Model Response</h3>
+            <p style="margin: 0; color: #495057; font-family: monospace; font-size: 13px;">${escapeHtml(responseData.ModelResponseMessage)}</p>
+          </div>
+        `;
+      }
+      
+      contentHtml += `
+          </div>
+        </div>
+      `;
+      
+      responseMainDisplay.innerHTML = contentHtml;
+    }
+    
+    function showBrowserView() {
+      ipcRenderer.invoke('show-browser-view').catch(error => {
+        console.error('Error showing browser view:', error);
+      });
+    }
+    
+    function hideBrowserView() {
+      ipcRenderer.invoke('hide-browser-view').catch(error => {
+        console.error('Error hiding browser view:', error);
+      });
     }
   </script>
 </body>
