@@ -571,44 +571,112 @@ ipcMain.handle('load-excel', async () => {
     const headers = data[0];
     let columns = {};
     
+    // 添加调试日志
+    console.log('=== Excel Column Parsing Debug ===');
+    console.log('Headers found:', headers);
+    console.log('Total columns:', headers.length);
+    
+    // 更精确的列识别逻辑
     headers.forEach((header, index) => {
-      const headerStr = String(header).toLowerCase();
-      if (headerStr.includes('description') || headerStr.includes('query')) {
-        columns.description = index;
-        columns.query = index; // 添加query别名
-      } else if (headerStr.includes('link') && !headerStr.includes('thumbnail')) {
-        columns.link = index;
-      } else if (headerStr.includes('image') || headerStr.includes('thumbnail')) {
-        columns.thumbnail_link = index;
-      } else if (headerStr.includes('result')) {
-        columns.result = index;
-      } else if (headerStr.includes('issue')) {
-        columns.issue = index;
-      } else if (headerStr.includes('screenshot')) {
-        columns.screenshot = index;
-      } else if (headerStr.includes('response')) {
-        columns.response = index;
+      const headerStr = String(header).toLowerCase().trim();
+      console.log(`Column ${index}: "${header}" -> "${headerStr}"`);
+      
+      // 使用更精确的匹配规则，避免误匹配
+      if (headerStr === 'description' || headerStr === 'query' || 
+          headerStr === 'desc' || headerStr.includes('描述')) {
+        if (columns.description === undefined) { // 防止重复匹配
+          columns.description = index;
+          columns.query = index;
+          console.log(`  ✓ Matched as description/query column`);
+        }
+      } else if ((headerStr.includes('link') || headerStr.includes('url')) && 
+                 !headerStr.includes('thumbnail') && !headerStr.includes('image')) {
+        if (columns.link === undefined) {
+          columns.link = index;
+          console.log(`  ✓ Matched as link column`);
+        }
+      } else if (headerStr.includes('thumbnail') || headerStr.includes('thumb') || 
+                 (headerStr.includes('image') && headerStr.includes('link'))) {
+        if (columns.thumbnail_link === undefined) {
+          columns.thumbnail_link = index;
+          console.log(`  ✓ Matched as thumbnail_link column`);
+        }
+      } else if (headerStr === 'result' || headerStr === 'score' || 
+                 headerStr.includes('评分') || headerStr.includes('结果')) {
+        if (columns.result === undefined) {
+          columns.result = index;
+          console.log(`  ✓ Matched as result column`);
+        }
+      } else if (headerStr === 'issue' || headerStr === 'note' || headerStr === 'notes' ||
+                 headerStr.includes('问题') || headerStr.includes('备注')) {
+        if (columns.issue === undefined) {
+          columns.issue = index;
+          console.log(`  ✓ Matched as issue column`);
+        }
+      } else if (headerStr === 'screenshot' || headerStr.includes('截图') || 
+                 headerStr.includes('screen')) {
+        if (columns.screenshot === undefined) {
+          columns.screenshot = index;
+          console.log(`  ✓ Matched as screenshot column`);
+        }
+      } else if (headerStr === 'response' || headerStr.includes('响应') || 
+                 headerStr.includes('回复') || headerStr.includes('返回')) {
+        if (columns.response === undefined) {
+          columns.response = index;
+          console.log(`  ✓ Matched as response column`);
+        }
+      } else {
+        console.log(`  - No match for this column`);
       }
     });
     
     // Set default indices if not found
-    if (columns.description === undefined) columns.description = 0;
-    if (columns.query === undefined) columns.query = 0;
-    if (columns.link === undefined) columns.link = 1;
-    if (columns.thumbnail_link === undefined) columns.thumbnail_link = 2;
-    if (columns.result === undefined) columns.result = 3;
-    if (columns.issue === undefined) columns.issue = 4;
-    if (columns.screenshot === undefined) columns.screenshot = headers.length;
-    if (columns.response === undefined) columns.response = headers.length;
+    const defaultColumns = {
+      description: 0,
+      query: 0,
+      link: 1,
+      thumbnail_link: 2,
+      result: 3,
+      issue: 4,
+      screenshot: headers.length, // 新列会添加到末尾
+      response: headers.length - 1 // response在倒数第二列
+    };
     
+    // 应用默认值并记录
+    console.log('\n=== Applying Defaults for Missing Columns ===');
+    Object.entries(defaultColumns).forEach(([key, defaultIndex]) => {
+      if (columns[key] === undefined) {
+        columns[key] = defaultIndex;
+        console.log(`${key}: using default position ${defaultIndex} (header: "${headers[defaultIndex] || 'NEW COLUMN'}")`);
+      } else {
+        console.log(`${key}: found at position ${columns[key]} (header: "${headers[columns[key]]}")`);
+      }
+    });
+    
+    // 最终结果
+    console.log('\n=== Final Column Mapping ===');
     console.log('Columns detected:', columns);
+    console.log('Column headers:');
+    Object.entries(columns).forEach(([key, index]) => {
+      console.log(`  ${key} (${index}): "${headers[index] || 'NEW COLUMN'}"`);
+    });
     console.log('First few rows:', data.slice(0, 3));
+    console.log('================================\n');
     
     return { 
       success: true,
       data, 
       columns, 
-      filename: path.basename(selectedExcelFile) 
+      filename: path.basename(selectedExcelFile),
+      debug: {
+        headers: headers,
+        totalColumns: headers.length,
+        columnMapping: Object.entries(columns).map(([key, index]) => ({
+          field: key,
+          index: index,
+          header: headers[index] || 'NEW COLUMN'
+        }))
+      }
     };
   } catch (error) {
     console.error('Error loading Excel file:', error);
@@ -818,6 +886,11 @@ ipcMain.handle('switch-to-preloaded', async (event, url, targetBounds) => {
 ipcMain.handle('adjust-browser-view', async (event, elementBounds) => {
   try {
     if (webView && elementBounds) {
+      // 确保BrowserView已添加到窗口
+      if (mainWindow) {
+        mainWindow.setBrowserView(webView);
+      }
+      
       // Use the exact element bounds from the frontend
       webView.setBounds({
         x: Math.round(elementBounds.x),
